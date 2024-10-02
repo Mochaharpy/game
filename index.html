@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Defense Game v1.11</title>
+    <title>Defense Game v1.12</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -219,10 +219,7 @@
                 { r: row - 1, c: col }, { r: row + 1, c: col },
                 { r: row, c: col - 1 }, { r: row, c: col + 1 }
             ];
-            return adjacentCells.some(cell => {
-                const { r, c } = cell;
-                return r >= 0 && r < gridSize && c >= 0 && c < gridSize && boardState[r][c] && (boardState[r][c].startsWith('Fort') || boardState[r][c].startsWith('Turret'));
-            });
+            return adjacentCells.some(({ r, c }) => r >= 0 && r < gridSize && c >= 0 && c < gridSize && boardState[r][c] && boardState[r][c].startsWith('Fort'));
         }
 
         function fireTurret(row, col, playerIndex) {
@@ -241,15 +238,15 @@
             const bulletInterval = setInterval(() => {
                 const bulletRect = bullet.getBoundingClientRect();
                 const targetCenter = {
-                    x: target.x * 75 + 30,
-                    y: target.y * 75 + 30,
+                    x: target.col * 75 + 30,
+                    y: target.row * 75 + 30,
                 };
 
                 const dx = targetCenter.x - bulletRect.x - bulletRect.width / 2;
                 const dy = targetCenter.y - bulletRect.y - bulletRect.height / 2;
 
                 const angle = Math.atan2(dy, dx);
-                const speed = 5; // Speed of the bullet
+                const speed = 3; // Speed of the bullet
 
                 bullet.style.transform = `translate(${Math.cos(angle) * speed}px, ${Math.sin(angle) * speed}px)`;
 
@@ -275,7 +272,7 @@
         }
 
         function applyDamage(target) {
-            const targetType = boardState[target.y][target.x];
+            const targetType = boardState[target.row][target.col];
             if (targetType.startsWith('Fort')) {
                 playerFortHealth[targetType.endsWith('1') ? 0 : 1]--;
                 if (playerFortHealth[targetType.endsWith('1') ? 0 : 1] <= 0) {
@@ -285,10 +282,10 @@
                 turretHealth[targetType.endsWith('1') ? 0 : 1]--;
                 if (turretHealth[targetType.endsWith('1') ? 0 : 1] <= 0) {
                     const playerIndex = targetType.endsWith('1') ? 0 : 1;
-                    const turretIndex = turrets[playerIndex].findIndex(t => t.row === target.y && t.col === target.x);
+                    const turretIndex = turrets[playerIndex].findIndex(t => t.row === target.row && t.col === target.col);
                     if (turretIndex !== -1) {
                         turrets[playerIndex].splice(turretIndex, 1);
-                        boardState[target.y][target.x] = null; // Remove turret from board
+                        boardState[target.row][target.col] = null; // Remove turret from board
                         updateHealthBars();
                     }
                 }
