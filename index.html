@@ -39,11 +39,11 @@
             position: relative;
         }
         .fort {
-            background-color: #4caf50; /* Green for forts */
+            background-color: blue; /* Blue for Player 1 Fort */
             position: relative;
         }
         .turret {
-            background-color: #ff9800; /* Orange for turrets */
+            background-color: red; /* Red for Player 1 Turrets */
             position: relative;
         }
         .bullet {
@@ -52,13 +52,7 @@
             background-color: red;
             border-radius: 50%;
             position: absolute;
-            transition: transform 0.5s;
-        }
-        .controls {
-            margin-top: 20px;
-            display: flex;
-            justify-content: space-between;
-            width: 100%;
+            transition: transform 1s; /* Slower bullet */
         }
         .health-bar {
             height: 10px;
@@ -70,6 +64,20 @@
         .health {
             height: 100%;
             background-color: green;
+        }
+        .end-screen {
+            display: none;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: white;
+            padding: 20px;
+            border: 2px solid black;
+            z-index: 10;
+        }
+        .reset-button {
+            margin-top: 10px;
         }
     </style>
 </head>
@@ -92,6 +100,10 @@
         </div>
         <div class="board" id="gameBoard"></div>
         <p id="message"></p>
+        <div class="end-screen" id="endScreen">
+            <p id="winnerMessage"></p>
+            <button class="reset-button" onclick="resetGame()">Reset Game</button>
+        </div>
     </div>
     
     <script>
@@ -101,6 +113,8 @@
         const player2PointsDisplay = document.getElementById('player2Points');
         const fort1HealthBar = document.getElementById('fort1Health');
         const fort2HealthBar = document.getElementById('fort2Health');
+        const endScreen = document.getElementById('endScreen');
+        const winnerMessage = document.getElementById('winnerMessage');
         const gridSize = 9;
 
         let currentPlayer = 1;
@@ -160,6 +174,7 @@
                         playerPoints[currentPlayer - 1] -= 3; // Deduct points for placing a turret
                         playerPoints[currentPlayer - 1]++; // Gain a point for placing a turret
                         updateHealthBars();
+                        fireTurret(row, col, currentPlayer - 1); // Fire immediately
                         endTurn(); // End the turn after placing a turret
                     } else {
                         messageDisplay.textContent = 'Not enough points to place a turret!';
@@ -184,40 +199,28 @@
             });
         }
 
-        function endTurn() {
-            updatePointDisplays();
+        function fireTurret(row, col, playerIndex) {
+            const bullet = document.createElement('div');
+            bullet.className = 'bullet';
+            const turretCell = document.querySelector(`.cell[data-row="${row}"][data-col="${col}"]`);
+            turretCell.appendChild(bullet);
 
-            // Check if current player has no points
-            if (playerPoints[currentPlayer - 1] <= 0) {
-                messageDisplay.textContent = `Player ${currentPlayer} has no points! Skipping turn.`;
-            } else {
-                currentPlayer = currentPlayer === 1 ? 2 : 1; // Switch to the other player
-            }
+            const target = findTarget(playerIndex);
+            if (!target) return;
 
-            // Start turret attacks if both players have placed at least one turret
-            if (turrets[0].length > 0 && turrets[1].length > 0) {
-                clearInterval(attackInterval);
-                attackInterval = setInterval(() => {
-                    turrets.forEach((turretArray, playerIndex) => {
-                        turretArray.forEach(turret => {
-                            attackStructure(turret.row, turret.col, playerIndex);
-                        });
-                    });
-                }, 2000); // Attack every 2 seconds
-            }
-        }
+            const targetCell = document.querySelector(`.cell[data-row="${target.row}"][data-col="${target.col}"]`);
+            const targetRect = targetCell.getBoundingClientRect();
+            const turretRect = turretCell.getBoundingClientRect();
 
-        function updatePointDisplays() {
-            player1PointsDisplay.textContent = playerPoints[0];
-            player2PointsDisplay.textContent = playerPoints[1];
-        }
+            const dx = targetRect.left - turretRect.left;
+            const dy = targetRect.top - turretRect.top;
 
-        function autoGainPoints() {
-            setInterval(() => {
-                playerPoints[0]++;
-                playerPoints[1]++;
-                updatePointDisplays();
-            }, 5000); // Gain 1 point every 5 seconds
+            bullet.style.transform = `translate(${dx}px, ${dy}px)`;
+
+            setTimeout(() => {
+                bullet.remove(); // Remove the bullet on impact
+                damageStructure(target.row, target.col, playerIndex);
+            }, 1000); // Bullet takes 1 second to reach the target
         }
 
         function findTarget(playerIndex) {
@@ -236,47 +239,71 @@
             return null; // No target found
         }
 
-        function attackStructure(row, col, playerIndex) {
-            const target = findTarget(playerIndex);
-            if (!target) return;
-
-            const bullet = document.createElement('div');
-            bullet.className = 'bullet';
-            const turretCell = document.querySelector(`.cell[data-row="${target.row}"][data-col="${target.col}"]`);
-            turretCell.appendChild(bullet);
-
-            const targetCell = document.querySelector(`.cell[data-row="${row}"][data-col="${col}"]`);
-            const targetRect = targetCell.getBoundingClientRect();
-            const turretRect = turretCell.getBoundingClientRect();
-
-            const dx = targetRect.left - turretRect.left;
-            const dy = targetRect.top - turretRect.top;
-
-            bullet.style.transform = `translate(${dx}px, ${dy}px)`;
-
-            setTimeout(() => {
-                bullet.remove();
-                // Damage the target
-                if (boardState[target.row][target.col] === `Fort${(playerIndex === 0 ? 2 : 1)}`) {
-                    playerFortHealth[playerIndex === 0 ? 1 : 0]--;
-                    if (playerFortHealth[playerIndex === 0 ? 1 : 0] <= 0) {
-                        messageDisplay.textContent = `Player ${playerIndex + 1} wins!`;
-                        clearInterval(attackInterval);
-                    }
-                } else if (boardState[target.row][target.col].startsWith('Turret')) {
-                    turretHealth[playerIndex === 0 ? 1 : 0]--; // Reduce turret health
-                    if (turretHealth[playerIndex === 0 ? 1 : 0] <= 0) {
-                        boardState[target.row][target.col] = null; // Destroy the turret
-                        playerPoints[playerIndex === 0 ? 1 : 0] += 3; // Reward points
-                        updateHealthBars();
-                    }
+        function damageStructure(row, col, playerIndex) {
+            if (boardState[row][col] === `Fort${(playerIndex === 0 ? 2 : 1)}`) {
+                playerFortHealth[playerIndex === 0 ? 1 : 0]--;
+                if (playerFortHealth[playerIndex === 0 ? 1 : 0] <= 0) {
+                    endGame(playerIndex + 1);
                 }
-                updateHealthBars();
-            }, 500);
+            } else if (boardState[row][col] && boardState[row][col].startsWith('Turret')) {
+                turretHealth[playerIndex === 0 ? 1 : 0]--; // Reduce turret health
+                if (turretHealth[playerIndex === 0 ? 1 : 0] <= 0) {
+                    boardState[row][col] = null; // Destroy the turret
+                    playerPoints[playerIndex === 0 ? 1 : 0] += 3; // Reward points
+                    updateHealthBars();
+                }
+            }
+            updateHealthBars();
         }
 
+        function endGame(winner) {
+            winnerMessage.textContent = `Player ${winner} wins!`;
+            endScreen.style.display = 'block'; // Show end screen
+            clearInterval(pointInterval); // Stop point gain
+        }
+
+        function endTurn() {
+            currentPlayer = currentPlayer === 1 ? 2 : 1; // Switch players
+            updateHealthBars();
+        }
+
+        function resetGame() {
+            currentPlayer = 1;
+            playerFortHealth = [10, 10];
+            turretHealth = [3, 3];
+            playerPoints = [12, 12];
+            boardState = Array(gridSize).fill().map(() => Array(gridSize).fill(null));
+            document.querySelectorAll('.bullet').forEach(bullet => bullet.remove());
+            endScreen.style.display = 'none'; // Hide end screen
+            updateHealthBars(); // Reset health bars
+            initializeBoard(); // Reinitialize the board
+        }
+
+        function initializeBoard() {
+            for (let i = 0; i < gridSize; i++) {
+                for (let j = 0; j < gridSize; j++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'cell';
+                    cell.dataset.row = i;
+                    cell.dataset.col = j;
+                    cell.addEventListener('click', () => handleCellClick(i, j));
+                    board.appendChild(cell);
+                }
+            }
+            boardState[fort1.row][fort1.col] = 'Fort1';
+            boardState[fort2.row][fort2.col] = 'Fort2';
+            updateHealthBars();
+        }
+
+        // Start point gain
+        pointInterval = setInterval(() => {
+            playerPoints[0]++;
+            playerPoints[1]++;
+            playerPointsDisplay[0].textContent = playerPoints[0];
+            playerPointsDisplay[1].textContent = playerPoints[1];
+        }, 5000); // Gain points every 5 seconds
+
         updateHealthBars(); // Initial health bar update
-        autoGainPoints(); // Start automatic point gain
     </script>
 </body>
 </html>
