@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Defense Game v1.16</title>
+    <title>Defense Game v1.17</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -55,8 +55,10 @@
             background-color: #ccc;
             border: 1px solid #aaa;
             margin: 5px 0;
+            position: relative;
         }
         .health { height: 100%; background-color: green; }
+        .missing-health { position: absolute; top: 0; left: 0; height: 100%; background-color: red; }
         .turret-health {
             font-size: 12px;
             color: darkred;
@@ -84,18 +86,20 @@
 </head>
 <body>
     <div class="game-container">
-        <h1>Defense Game v1.16</h1>
+        <h1>Defense Game v1.17</h1>
         <div class="points-container">
             <div>
                 <p>Player 1 Points: <span id="player1Points">12</span></p>
                 <div class="health-bar" id="fort1HealthContainer">
                     <div class="health" id="fort1Health" style="width: 100%;"></div>
+                    <div class="missing-health" id="fort1MissingHealth" style="width: 0%;"></div>
                 </div>
             </div>
             <div>
                 <p>Player 2 Points: <span id="player2Points">12</span></p>
                 <div class="health-bar" id="fort2HealthContainer">
                     <div class="health" id="fort2Health" style="width: 100%;"></div>
+                    <div class="missing-health" id="fort2MissingHealth" style="width: 0%;"></div>
                 </div>
             </div>
         </div>
@@ -111,7 +115,9 @@
         const board = document.getElementById('gameBoard');
         const messageDisplay = document.getElementById('message');
         const fort1HealthBar = document.getElementById('fort1Health');
+        const fort1MissingHealthBar = document.getElementById('fort1MissingHealth');
         const fort2HealthBar = document.getElementById('fort2Health');
+        const fort2MissingHealthBar = document.getElementById('fort2MissingHealth');
         const endScreen = document.getElementById('endScreen');
         const winnerMessage = document.getElementById('winnerMessage');
         const gridSize = 9;
@@ -148,7 +154,10 @@
 
         function updateHealthBars() {
             fort1HealthBar.style.width = `${(playerFortHealth[0] / 10) * 100}%`;
+            fort1MissingHealthBar.style.width = `${((10 - playerFortHealth[0]) / 10) * 100}%`;
             fort2HealthBar.style.width = `${(playerFortHealth[1] / 10) * 100}%`;
+            fort2MissingHealthBar.style.width = `${((10 - playerFortHealth[1]) / 10) * 100}%`;
+
             const cells = document.querySelectorAll('.cell');
             cells.forEach(cell => {
                 const row = cell.dataset.row;
@@ -199,59 +208,55 @@
             return adjacentCells.some(cell => {
                 const { r, c } = cell;
                 return r >= 0 && r < gridSize && c >= 0 && c < gridSize &&
-                    (boardState[r][c] && boardState[r][c].startsWith(`Turret${currentPlayer}`) || boardState[r][c] === `Fort${currentPlayer}`);
+                    (boardState[r][c] && boardState[r][c].startsWith(`Turret${currentPlayer}`) || boardState[r][c].startsWith(`Fort${currentPlayer}`));
             });
         }
 
         function fireTurret(row, col, playerIndex) {
             const target = findNearestEnemyStructure(playerIndex);
             if (target) {
-                createBullet(row, col, target.row, target.col);
+                const bullet = document.createElement('div');
+                bullet.className = 'bullet';
+                bullet.style.left = `${col * 70 + 30}px`;
+                bullet.style.top = `${row * 70 + 30}px`;
+                board.appendChild(bullet);
+
+                const targetX = target.col * 70 + 30;
+                const targetY = target.row * 70 + 30;
+                const dx = targetX - (col * 70 + 30);
+                const dy = targetY - (row * 70 + 30);
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                const steps = Math.floor(distance / 5);
+                const stepX = dx / steps;
+                const stepY = dy / steps;
+
+                let currentX = col * 70 + 30;
+                let currentY = row * 70 + 30;
+
+                const interval = setInterval(() => {
+                    currentX += stepX;
+                    currentY += stepY;
+                    bullet.style.left = `${currentX}px`;
+                    bullet.style.top = `${currentY}px`;
+
+                    // Check if the bullet hits a turret
+                    for (let t of turrets[1 - playerIndex]) {
+                        if (t.row === target.row && t.col === target.col && bullet.getBoundingClientRect().intersects(t.getBoundingClientRect())) {
+                            clearInterval(interval);
+                            bullet.remove();
+                            handleHit(target.row, target.col, 1 - playerIndex);
+                            return;
+                        }
+                    }
+
+                    // Check if the bullet has reached the target
+                    if (Math.abs(currentX - targetX) < 5 && Math.abs(currentY - targetY) < 5) {
+                        clearInterval(interval);
+                        bullet.remove();
+                        handleHit(target.row, target.col, playerIndex);
+                    }
+                }, 20);
             }
-        }
-
-        function createBullet(turretRow, turretCol, targetRow, targetCol) {
-            const bullet = document.createElement('div');
-            bullet.className = 'bullet';
-            bullet.style.left = `${turretCol * 70 + 30}px`; // Center of turret
-            bullet.style.top = `${turretRow * 70 + 30}px`; // Center of turret
-            board.appendChild(bullet);
-
-            const targetX = targetCol * 70 + 30;
-            const targetY = targetRow * 70 + 30;
-            const dx = targetX - (turretCol * 70 + 30);
-            const dy = targetY - (turretRow * 70 + 30);
-            const distance = Math.sqrt(dx * dx + dy * dy);
-            const steps = Math.floor(distance / 5);
-            const stepX = dx / steps;
-            const stepY = dy / steps;
-
-            let currentX = turretCol * 70 + 30;
-            let currentY = turretRow * 70 + 30;
-
-            const interval = setInterval(() => {
-                currentX += stepX;
-                currentY += stepY;
-                bullet.style.left = `${currentX}px`;
-                bullet.style.top = `${currentY}px`;
-
-                // Check if the bullet has hit an enemy turret
-                const hitTurret = turrets[1 - currentPlayer].some(t => t.row === targetRow && t.col === targetCol && bullet.getBoundingClientRect().intersects(t.getBoundingClientRect()));
-                if (hitTurret) {
-                    clearInterval(interval);
-                    bullet.remove();
-                    // Logic for turret health reduction
-                    handleHit(targetRow, targetCol, 1 - currentPlayer);
-                    return;
-                }
-
-                // Check if the bullet has reached the target
-                if (Math.abs(currentX - targetX) < 5 && Math.abs(currentY - targetY) < 5) {
-                    clearInterval(interval);
-                    bullet.remove();
-                    handleHit(targetRow, targetCol, currentPlayer - 1);
-                }
-            }, 20);
         }
 
         function findNearestEnemyStructure(playerIndex) {
@@ -331,11 +336,6 @@
             endScreen.style.display = 'none';
             currentPlayer = 1;
             messageDisplay.textContent = `Player ${currentPlayer}'s turn`;
-
-            // Re-add forts
-            boardState[fort1.row][fort1.col] = 'Fort1';
-            boardState[fort2.row][fort2.col] = 'Fort2';
-            updateHealthBars();
         }
     </script>
 </body>
