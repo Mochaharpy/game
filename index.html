@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fort Defense Game v1.1</title>
+    <title>Fort Defense Game v1.2</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -153,6 +153,7 @@
             boardState[fort1.row][fort1.col] = 'Fort1';
             boardState[fort2.row][fort2.col] = 'Fort2';
             updateHealthBars();
+            startTurretFire(); // Start periodic firing
         }
 
         // Function to display health bars
@@ -218,7 +219,7 @@
             const bullet = document.createElement('div');
             bullet.className = 'bullet';
             turretCell.appendChild(bullet);
-            
+
             const target = findTarget(playerIndex);
             if (target) {
                 const targetCell = document.querySelector(`.cell[data-row="${target.row}"][data-col="${target.col}"]`);
@@ -297,6 +298,16 @@
             document.querySelectorAll('.bullet').forEach(bullet => bullet.remove());
             endScreen.style.display = 'none'; // Hide end screen
             initializeBoard(); // Reinitialize the board
+        }
+
+        function startTurretFire() {
+            setInterval(() => {
+                turrets.forEach((playerTurrets, index) => {
+                    playerTurrets.forEach(({ row, col }) => {
+                        fireTurret(row, col, index);
+                    });
+                });
+            }, 2000); // Turrets fire every 2 seconds
         }
 
         // Start point gain
