@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Defense Game v1.20</title>
+    <title>Defense Game v1.21</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -74,6 +74,7 @@
         .turret-health {
             font-size: 12px;
             color: darkred;
+            text-align: center;
         }
         .end-screen {
             display: none;
@@ -98,7 +99,7 @@
 </head>
 <body>
     <div class="game-container">
-        <h1>Defense Game v1.20</h1>
+        <h1>Defense Game v1.21</h1>
         <div class="points-container">
             <div>
                 <p>Player 1 Points: <span id="player1Points">12</span></p>
@@ -233,8 +234,8 @@
             if (target) {
                 const bullet = document.createElement('div');
                 bullet.className = 'bullet';
-                bullet.style.left = `${col * 70 + 35}px`;
-                bullet.style.top = `${row * 70 + 35}px`;
+                bullet.style.left = `${col * 70 + 35}px`; // Center of turret
+                bullet.style.top = `${row * 70 + 35}px`; // Center of turret
                 bullets.push(bullet); // Store bullet reference
                 board.appendChild(bullet);
 
