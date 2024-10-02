@@ -65,6 +65,10 @@
             height: 100%;
             background-color: green;
         }
+        .turret-health {
+            font-size: 12px;
+            color: darkred; /* Color for turret health */
+        }
         .end-screen {
             display: none;
             position: absolute;
@@ -168,6 +172,7 @@
                     cell.classList.add('fort');
                 } else if (cell.textContent.startsWith('Turret')) {
                     cell.classList.add('turret');
+                    cell.innerHTML += `<div class="turret-health">Health: ${turretHealth[currentPlayer - 1]}</div>`;
                 }
             });
         }
@@ -223,23 +228,31 @@
                 setTimeout(() => {
                     bullet.remove(); // Remove the bullet on impact
                     damageStructure(target.row, target.col, playerIndex);
-                }, 1000); // Bullet takes 1 second to reach the target
+                }, 2000); // Bullet takes 2 seconds to reach the target
             }
         }
 
         function findTarget(playerIndex) {
             const opponentIndex = playerIndex === 0 ? 1 : 0;
-            let fortTarget = null;
 
-            // Check for the nearest fort
+            // Check for the nearest fort first
             for (let i = 0; i < gridSize; i++) {
                 for (let j = 0; j < gridSize; j++) {
                     if (boardState[i][j] === `Fort${opponentIndex + 1}`) {
-                        fortTarget = { row: i, col: j };
-                        return fortTarget; // Prioritize the fort
+                        return { row: i, col: j }; // Prioritize the fort
                     }
                 }
             }
+
+            // Check for turrets if no fort found
+            for (let i = 0; i < gridSize; i++) {
+                for (let j = 0; j < gridSize; j++) {
+                    if (boardState[i][j] && boardState[i][j].startsWith('Turret') && boardState[i][j] !== `Turret${playerIndex + 1}`) {
+                        return { row: i, col: j };
+                    }
+                }
+            }
+
             return null; // No target found
         }
 
