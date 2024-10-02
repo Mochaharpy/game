@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Defense Game v1.4</title>
+    <title>Defense Game v1.5</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -45,6 +45,9 @@
         .turret {
             background-color: #f77f00; /* Player 1 Turrets */
             position: relative;
+        }
+        .fort2, .turret2 {
+            background-color: #ff6f61; /* Player 2 Structures */
         }
         .bullet {
             width: 10px;
@@ -166,14 +169,14 @@
                 const row = cell.dataset.row;
                 const col = cell.dataset.col;
                 cell.textContent = boardState[row][col] || '';
-                cell.classList.remove('fort', 'turret');
+                cell.classList.remove('fort', 'fort2', 'turret', 'turret2');
                 if (boardState[row][col] === 'Fort1') {
                     cell.classList.add('fort');
                 } else if (boardState[row][col] === 'Fort2') {
-                    cell.classList.add('fort');
+                    cell.classList.add('fort2');
                 } else if (cell.textContent.startsWith('Turret')) {
-                    cell.classList.add('turret');
                     const playerIndex = cell.textContent.endsWith('1') ? 0 : 1;
+                    cell.classList.add('turret' + (playerIndex + 1));
                     const healthDisplay = '-'.repeat(turretHealth[playerIndex]);
                     cell.innerHTML += `<div class="turret-health">${healthDisplay}</div>`;
                 }
@@ -216,12 +219,12 @@
 
         function fireTurret(row, col, playerIndex) {
             const turretCell = document.querySelector(`.cell[data-row="${row}"][data-col="${col}"]`);
-            const bullet = document.createElement('div');
-            bullet.className = 'bullet';
-            turretCell.appendChild(bullet);
-
             const target = findTarget(playerIndex);
             if (target) {
+                const bullet = document.createElement('div');
+                bullet.className = 'bullet';
+                turretCell.appendChild(bullet);
+
                 const targetCell = document.querySelector(`.cell[data-row="${target.row}"][data-col="${target.col}"]`);
                 const dx = targetCell.offsetLeft - turretCell.offsetLeft;
                 const dy = targetCell.offsetTop - turretCell.offsetTop;
