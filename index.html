@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Defense Game v1.12</title>
+    <title>Defense Game v1.13</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -209,9 +209,7 @@
                 if (target) {
                     const bullet = createBullet(turretCell, target);
                     bullet.addEventListener('animationend', () => {
-                        if (boardState[target.row][target.col]) {
-                            handleHit(target.row, target.col, playerIndex);
-                        }
+                        handleHit(target.row, target.col, playerIndex);
                         bullet.remove(); // Remove bullet after hit
                     });
                 }
@@ -301,9 +299,9 @@
             boardState = Array.from({ length: gridSize }, () => Array(gridSize).fill(null));
             boardState[fort1.row][fort1.col] = 'Fort1';
             boardState[fort2.row][fort2.col] = 'Fort2';
+            turrets = [[], []];
             initializeBoard();
             endScreen.style.display = 'none';
-            document.querySelectorAll('.bullet').forEach(bullet => bullet.remove());
         }
 
         // Start turret firing with intervals
