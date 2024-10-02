@@ -208,31 +208,51 @@
             if (turretCell) {
                 const target = findTarget(playerIndex);
                 if (target) {
-                    const bullet = createBullet(turretCell, target);
-                    bullet.addEventListener('animationend', () => {
-                        handleHit(target.row, target.col, playerIndex);
-                        bullet.remove(); // Remove bullet after hit
-                    });
+                    createBullet(turretCell, target, playerIndex);
                 }
             }
         }
 
-        function createBullet(turretCell, target) {
+        function createBullet(turretCell, target, playerIndex) {
             const bullet = document.createElement('div');
             bullet.className = 'bullet';
             bullet.style.left = `${turretCell.offsetLeft + 30}px`;
             bullet.style.top = `${turretCell.offsetTop + 30}px`;
             board.appendChild(bullet);
 
-            // Calculate direction and animation
             const dx = target.col * 70 + 35 - (turretCell.offsetLeft + 35);
             const dy = target.row * 70 + 35 - (turretCell.offsetTop + 35);
             const distance = Math.sqrt(dx * dx + dy * dy);
-            const duration = distance / 200; // Increase speed
+            const steps = Math.floor(distance / 5); // Number of steps to take
+            const stepX = dx / steps;
+            const stepY = dy / steps;
 
-            bullet.style.transition = `transform ${duration}s linear`;
-            bullet.style.transform = `translate(${dx}px, ${dy}px)`;
-            return bullet;
+            let currentX = turretCell.offsetLeft + 30;
+            let currentY = turretCell.offsetTop + 30;
+
+            const interval = setInterval(() => {
+                currentX += stepX;
+                currentY += stepY;
+                bullet.style.left = `${currentX}px`;
+                bullet.style.top = `${currentY}px`;
+
+                const currentRow = Math.floor(currentY / 70);
+                const currentCol = Math.floor(currentX / 70);
+
+                if (currentRow >= 0 && currentRow < gridSize && currentCol >= 0 && currentCol < gridSize) {
+                    const structure = boardState[currentRow][currentCol];
+                    if (structure) {
+                        clearInterval(interval); // Stop the bullet
+                        handleHit(currentRow, currentCol, playerIndex);
+                        bullet.remove(); // Remove bullet after hit
+                    }
+                }
+
+                if (Math.abs(currentX - (target.col * 70 + 35)) < 5 && Math.abs(currentY - (target.row * 70 + 35)) < 5) {
+                    clearInterval(interval); // Stop the bullet when it reaches the target
+                    bullet.remove(); // Remove bullet when it reaches the target
+                }
+            }, 20); // Adjust timing for smoother animation
         }
 
         function handleHit(row, col, playerIndex) {
