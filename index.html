@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Defense Game v1.14</title>
+    <title>Defense Game v1.15</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -221,11 +221,12 @@
             board.appendChild(bullet);
 
             const targetX = targetCol * 70 + 35; // Center of target cell
-            const targetY = targetRow * 70 + 35; // Center of target cell
+            const targetY = targetRow * 70 + 35;
+
             const dx = targetX - (turretCell.offsetLeft + 35);
             const dy = targetY - (turretCell.offsetTop + 35);
             const distance = Math.sqrt(dx * dx + dy * dy);
-            const steps = Math.floor(distance / 5); // Number of steps to take
+            const steps = Math.floor(distance / 5);
             const stepX = dx / steps;
             const stepY = dy / steps;
 
@@ -244,26 +245,23 @@
                 if (currentRow >= 0 && currentRow < gridSize && currentCol >= 0 && currentCol < gridSize) {
                     const structure = boardState[currentRow][currentCol];
                     if (structure) {
-                        // Check if the turret that fired the bullet still exists
                         const turretIndex = boardState[row][col].endsWith('1') ? 0 : 1;
                         if (turrets[turretIndex].some(t => t.row === row && t.col === col)) {
-                            clearInterval(interval); // Stop the bullet
+                            clearInterval(interval);
                             handleHit(currentRow, currentCol, playerIndex);
-                            bullet.remove(); // Remove bullet after hit
+                            bullet.remove();
                         } else {
-                            // The turret has been destroyed; remove the bullet
                             clearInterval(interval);
                             bullet.remove();
                         }
                     }
                 }
 
-                // Check if the bullet has reached the target
                 if (Math.abs(currentX - targetX) < 5 && Math.abs(currentY - targetY) < 5) {
-                    clearInterval(interval); // Stop the bullet when it reaches the target
-                    bullet.remove(); // Remove bullet when it reaches the target
+                    clearInterval(interval);
+                    bullet.remove();
                 }
-            }, 20); // Adjust timing for smoother animation
+            }, 20);
         }
 
         function findTarget(playerIndex) {
