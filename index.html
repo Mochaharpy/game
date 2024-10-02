@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Defense Game v1.10</title>
+    <title>Defense Game v1.11</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -221,8 +221,7 @@
             ];
             return adjacentCells.some(cell => {
                 const { r, c } = cell;
-                return r >= 0 && r < gridSize && c >= 0 && c < gridSize &&
-                    (boardState[r][c] && boardState[r][c].startsWith(`Turret${currentPlayer}`) || boardState[r][c] === `Fort${currentPlayer}`);
+                return r >= 0 && r < gridSize && c >= 0 && c < gridSize && boardState[r][c] && (boardState[r][c].startsWith('Fort') || boardState[r][c].startsWith('Turret'));
             });
         }
 
@@ -267,9 +266,7 @@
             const enemyStructures = [];
             for (let r = 0; r < gridSize; r++) {
                 for (let c = 0; c < gridSize; c++) {
-                    if (boardState[r][c] && boardState[r][c].startsWith('Fort') && boardState[r][c] !== `Fort${playerIndex + 1}`) {
-                        enemyStructures.push({ x: c, y: r });
-                    } else if (boardState[r][c] && boardState[r][c].startsWith('Turret') && boardState[r][c] !== `Turret${playerIndex + 1}`) {
+                    if (boardState[r][c] && boardState[r][c] !== `Fort${playerIndex + 1}` && (boardState[r][c].startsWith('Fort') || boardState[r][c].startsWith('Turret'))) {
                         enemyStructures.push({ x: c, y: r });
                     }
                 }
@@ -316,7 +313,6 @@
 
         function endGame(message) {
             clearInterval(pointInterval);
-            clearInterval(bulletInterval);
             winnerMessage.textContent = message;
             endScreen.style.display = 'block';
         }
