@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Defense Game v1.16</title>
+    <title>Defense Game v1.14</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -208,12 +208,12 @@
             if (turretCell) {
                 const target = findTarget(playerIndex);
                 if (target) {
-                    createBullet(turretCell, target);
+                    createBullet(turretCell, target, playerIndex);
                 }
             }
         }
 
-        function createBullet(turretCell, target) {
+        function createBullet(turretCell, target, playerIndex) {
             const bullet = document.createElement('div');
             bullet.className = 'bullet';
             bullet.style.left = `${turretCell.offsetLeft + 30}px`;
@@ -266,13 +266,11 @@
                     }
                 } else if (structure.startsWith('Turret')) {
                     const turretIndex = structure.endsWith('1') ? 0 : 1;
-                    if (turretIndex !== playerIndex) { // Prevent self-targeting
-                        turretHealth[turretIndex]--;
-                        if (turretHealth[turretIndex] <= 0) {
-                            const turretCell = document.querySelector(`.cell[data-row="${row}"][data-col="${col}"]`);
-                            boardState[row][col] = null; // Remove turret from board
-                            turretCell.innerHTML = ''; // Clear turret cell
-                        }
+                    turretHealth[turretIndex]--;
+                    if (turretHealth[turretIndex] <= 0) {
+                        const turretCell = document.querySelector(`.cell[data-row="${row}"][data-col="${col}"]`);
+                        boardState[row][col] = null; // Remove turret from board
+                        turretCell.innerHTML = ''; // Clear turret cell
                     }
                 }
                 updateHealthBars();
@@ -294,8 +292,7 @@
             // Target enemy turrets if no fort found
             for (let i = 0; i < gridSize; i++) {
                 for (let j = 0; j < gridSize; j++) {
-                    const structure = boardState[i][j];
-                    if (structure && structure.startsWith('Turret') && structure !== `Turret${playerIndex + 1}`) {
+                    if (boardState[i][j] && boardState[i][j].startsWith('Turret') && boardState[i][j] !== `Turret${playerIndex + 1}`) {
                         return { row: i, col: j };
                     }
                 }
