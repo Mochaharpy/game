@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fort Defense Game v1.2</title>
+    <title>Defense Game v1.3</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -39,20 +39,20 @@
             position: relative;
         }
         .fort {
-            background-color: #8ecae6; /* Softer blue for Player 1 Fort */
+            background-color: #8ecae6; /* Player 1 Fort */
             position: relative;
         }
         .turret {
-            background-color: #f77f00; /* Softer red for Player 1 Turrets */
+            background-color: #f77f00; /* Player 1 Turrets */
             position: relative;
         }
         .bullet {
             width: 10px;
             height: 10px;
-            background-color: #ff3e00; /* Softer red for bullets */
+            background-color: #ff3e00; /* Bullets */
             border-radius: 50%;
             position: absolute;
-            transition: transform 1s; /* Slower bullet */
+            transition: transform 2s; /* Slower bullet */
         }
         .health-bar {
             height: 10px;
@@ -67,7 +67,7 @@
         }
         .turret-health {
             font-size: 12px;
-            color: darkred; /* Color for turret health */
+            color: darkred;
         }
         .end-screen {
             display: none;
@@ -87,7 +87,7 @@
 </head>
 <body>
     <div class="game-container">
-        <h1>Fort Defense Game</h1>
+        <h1>Defense Game</h1>
         <div class="controls">
             <div>
                 <p>Player 1 Points: <span id="player1Points">12</span></p>
