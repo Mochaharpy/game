@@ -79,7 +79,7 @@
         </div>
         <div class="board" id="gameBoard"></div>
         <div class="controls">
-            <button id="attack">Attack!</button>
+            <button id="attack" disabled>Attack!</button>
             <p id="message"></p>
         </div>
     </div>
@@ -98,6 +98,7 @@
         let playerPoints = [12, 12]; // Points for each player
         let boardState = Array(gridSize).fill().map(() => Array(gridSize).fill(null));
         let attackInterval; // Interval for turret attacks
+        let canAttack = false; // Track if players can attack
 
         // Place forts automatically on the left and right
         const fort1 = { row: 2, col: 0, health: playerFortHealth[0] };
@@ -117,6 +118,27 @@
             }
         }
 
+        // Function to display health bars
+        function updateHealthBars() {
+            const cells = document.querySelectorAll('.cell');
+            cells.forEach(cell => {
+                const row = cell.dataset.row;
+                const col = cell.dataset.col;
+                cell.textContent = boardState[row][col] || '';
+                cell.classList.remove('fort', 'turret');
+                if (boardState[row][col] === 'Fort1') {
+                    cell.classList.add('fort');
+                    cell.innerHTML += `<div class="health-bar"><div class="health" style="width: ${(playerFortHealth[0] * 10)}%;"></div></div>`;
+                } else if (boardState[row][col] === 'Fort2') {
+                    cell.classList.add('fort');
+                    cell.innerHTML += `<div class="health-bar"><div class="health" style="width: ${(playerFortHealth[1] * 10)}%;"></div></div>`;
+                } else if (cell.textContent.startsWith('Turret')) {
+                    cell.classList.add('turret');
+                    cell.innerHTML += `<div class="health-bar"><div class="health" style="width: ${(turretHealth[currentPlayer - 1] * 33.33)}%;"></div></div>`;
+                }
+            });
+        }
+
         function handleCellClick(row, col) {
             if (boardState[row][col] === null) {
                 if (canPlaceTurret(row, col)) {
@@ -124,7 +146,8 @@
                         boardState[row][col] = `Turret${currentPlayer}`;
                         turrets[currentPlayer - 1].push({ row, col });
                         playerPoints[currentPlayer - 1] -= 3; // Deduct points for placing a turret
-                        updateBoard();
+                        updateHealthBars();
+                        checkAttackStatus(); // Check if both players can attack
                         endTurn(); // End the turn after placing a turret
                     } else {
                         messageDisplay.textContent = 'Not enough points to place a turret!';
@@ -150,43 +173,77 @@
             });
         }
 
-        function updateBoard() {
-            const cells = document.querySelectorAll('.cell');
-            cells.forEach(cell => {
-                const row = cell.dataset.row;
-                const col = cell.dataset.col;
-                cell.textContent = boardState[row][col] || '';
-                cell.classList.remove('fort', 'turret');
-                if (boardState[row][col] === 'Fort1') {
-                    cell.classList.add('fort');
-                    cell.innerHTML += `<div class="health-bar"><div class="health" style="width: ${(playerFortHealth[0] * 10)}%;"></div></div>`;
-                } else if (boardState[row][col] === 'Fort2') {
-                    cell.classList.add('fort');
-                    cell.innerHTML += `<div class="health-bar"><div class="health" style="width: ${(playerFortHealth[1] * 10)}%;"></div></div>`;
-                } else if (cell.textContent.startsWith('Turret')) {
-                    cell.classList.add('turret');
-                    cell.innerHTML += `<div class="health-bar"><div class="health" style="width: ${(turretHealth[currentPlayer - 1] * 33.33)}%;"></div></div>`;
-                }
-            });
-            player1PointsDisplay.textContent = playerPoints[0];
-            player2PointsDisplay.textContent = playerPoints[1];
+        function checkAttackStatus() {
+            // Enable attack button only if both players have at least one turret
+            if (turrets[0].length > 0 && turrets[1].length > 0) {
+                canAttack = true;
+                attackButton.disabled = false;
+            }
         }
 
         function endTurn() {
-            // Start turret attacks
-            clearInterval(attackInterval);
-            attackInterval = setInterval(() => {
-                turrets.forEach((turretArray, playerIndex) => {
-                    turretArray.forEach(turret => {
-                        const targetRow = playerIndex === 0 ? fort2.row : fort1.row;
-                        const targetCol = playerIndex === 0 ? fort2.col : fort1.col;
+            // Check if the current player has no points
+            if (playerPoints[currentPlayer - 1] <= 0) {
+                messageDisplay.textContent = `Player ${currentPlayer} has no points! Skipping turn.`;
+                currentPlayer = currentPlayer === 1 ? 2 : 1; // Switch to the other player
+                if (playerPoints[currentPlayer - 1] > 0) {
+                    messageDisplay.textContent = `Player ${currentPlayer}'s turn.`;
+                } else {
+                    messageDisplay.textContent = `Both players have no points! Game over.`;
+                    clearInterval(attackInterval);
+                }
+                return;
+            }
 
-                        if (boardState[targetRow][targetCol] && (boardState[targetRow][targetCol].startsWith('Fort') || turretHealth[playerIndex] > 0)) {
-                            attackStructure(targetRow, targetCol, playerIndex);
-                        }
+            // Start turret attacks if both players can attack
+            if (canAttack) {
+                clearInterval(attackInterval);
+                attackInterval = setInterval(() => {
+                    turrets.forEach((turretArray, playerIndex) => {
+                        turretArray.forEach(turret => {
+                            const target = findTarget(playerIndex);
+                            if (target) {
+                                attackStructure(target.row, target.col, playerIndex);
+                            }
+                        });
                     });
-                });
-            }, 2000); // Attack every 2 seconds
+                }, 2000); // Attack every 2 seconds
+            }
+        }
+
+        function findTarget(playerIndex) {
+            // Determine the nearest target structure, prioritizing the fort
+            const opponentIndex = playerIndex === 0 ? 1 : 0;
+            let fortTarget = null;
+            let turretTarget = null;
+
+            // Check if the opponent's fort is within range
+            for (let i = 0; i < gridSize; i++) {
+                for (let j = 0; j < gridSize; j++) {
+                    if (boardState[i][j] === `Fort${opponentIndex + 1}`) {
+                        fortTarget = { row: i, col: j };
+                        break;
+                    }
+                }
+                if (fortTarget) break;
+            }
+
+            // If the fort isn't found or if it's not in range, look for turrets
+            if (fortTarget) {
+                return fortTarget;
+            } else {
+                for (let i = 0; i < gridSize; i++) {
+                    for (let j = 0; j < gridSize; j++) {
+                        if (boardState[i][j] && boardState[i][j].startsWith(`Turret${opponentIndex + 1}`)) {
+                            turretTarget = { row: i, col: j };
+                            break;
+                        }
+                    }
+                    if (turretTarget) break;
+                }
+            }
+
+            return turretTarget;
         }
 
         function attackStructure(row, col, playerIndex) {
@@ -210,22 +267,55 @@
                 // Damage the target
                 if (boardState[row][col] === 'Fort1' && playerIndex === 0) {
                     playerFortHealth[0]--;
+                    damageAdjacentStructures(row, col, playerIndex);
                     if (playerFortHealth[0] <= 0) {
                         messageDisplay.textContent = 'Player 2 wins!';
                         clearInterval(attackInterval);
                     }
                 } else if (boardState[row][col] === 'Fort2' && playerIndex === 1) {
                     playerFortHealth[1]--;
+                    damageAdjacentStructures(row, col, playerIndex);
                     if (playerFortHealth[1] <= 0) {
                         messageDisplay.textContent = 'Player 1 wins!';
                         clearInterval(attackInterval);
                     }
+                } else if (boardState[row][col].startsWith('Turret')) {
+                    turretHealth[opponentIndex]--; // Reduce turret health
+                    if (turretHealth[opponentIndex] <= 0) {
+                        boardState[row][col] = null; // Destroy the turret
+                        playerPoints[opponentIndex] += 3; // Reward points
+                    }
                 }
-                updateBoard();
+                updateHealthBars();
             }, 500);
         }
 
-        updateBoard(); // Initial board update
+        function damageAdjacentStructures(row, col, playerIndex) {
+            const directions = [
+                { dr: 0, dc: 1 }, // Right
+                { dr: 0, dc: -1 }, // Left
+                { dr: 1, dc: 0 }, // Down
+                { dr: -1, dc: 0 }  // Up
+            ];
+
+            directions.forEach(({ dr, dc }) => {
+                for (let distance = 1; distance <= 3; distance++) {
+                    const r = row + dr * distance;
+                    const c = col + dc * distance;
+                    if (r >= 0 && r < gridSize && c >= 0 && c < gridSize) {
+                        if (boardState[r][c] && boardState[r][c].startsWith('Fort')) {
+                            const opponentIndex = playerIndex === 0 ? 1 : 0;
+                            playerFortHealth[opponentIndex]--; // Damage the opponent's fort
+                        } else if (boardState[r][c] && boardState[r][c].startsWith('Turret')) {
+                            const opponentIndex = playerIndex === 0 ? 1 : 0;
+                            turretHealth[opponentIndex]--; // Damage the turret
+                        }
+                    }
+                }
+            });
+        }
+
+        updateHealthBars(); // Initial health bar update
     </script>
 </body>
 </html>
