@@ -26,7 +26,7 @@
             grid-template-rows: repeat(9, 70px);
             gap: 5px;
             margin: 20px 0;
-            position: relative; /* Allows absolute positioning for bullets */
+            position: relative;
         }
         .cell {
             width: 70px;
@@ -48,7 +48,7 @@
             background-color: #ff3e00;
             border-radius: 50%;
             position: absolute;
-            transition: transform 0.5s linear; /* Adjusted bullet transition for realism */
+            transition: transform 0.5s linear;
         }
         .health-bar {
             height: 10px;
@@ -126,6 +126,7 @@
         let playerPoints = [12, 12];
         let boardState = Array.from({ length: gridSize }, () => Array(gridSize).fill(null));
 
+        // Fort positions
         const fort1 = { row: 4, col: 0 };
         const fort2 = { row: 4, col: gridSize - 1 };
         boardState[fort1.row][fort1.col] = 'Fort1';
@@ -146,7 +147,7 @@
                 }
             }
             updateHealthBars();
-            startTurretFire();
+            startTurretFire(); // Start turret firing after initialization
         }
 
         function updateHealthBars() {
@@ -212,13 +213,13 @@
                 if (target) {
                     const bullet = document.createElement('div');
                     bullet.className = 'bullet';
-                    document.body.appendChild(bullet); // Render bullet above the grid
+                    document.body.appendChild(bullet);
 
                     const targetCell = document.querySelector(`.cell[data-row="${target.row}"][data-col="${target.col}"]`);
                     const turretPosition = turretCell.getBoundingClientRect();
                     const targetPosition = targetCell.getBoundingClientRect();
 
-                    // Calculate bullet starting position
+                    // Set bullet starting position
                     bullet.style.left = `${turretPosition.left + turretPosition.width / 2 - 5}px`;
                     bullet.style.top = `${turretPosition.top + turretPosition.height / 2 - 5}px`;
 
@@ -294,23 +295,28 @@
             turretHealth = [3, 3];
             playerPoints = [12, 12];
             boardState = Array.from({ length: gridSize }, () => Array(gridSize).fill(null));
+
+            // Restore forts
+            boardState[fort1.row][fort1.col] = 'Fort1';
+            boardState[fort2.row][fort2.col] = 'Fort2';
+
             document.querySelectorAll('.bullet').forEach(bullet => bullet.remove());
             endScreen.style.display = 'none';
-            initializeBoard();
+            initializeBoard(); // Reinitialize the board
             document.querySelectorAll('.cell').forEach(cell => cell.style.pointerEvents = 'auto');
         }
 
         function startTurretFire() {
             turrets.forEach((playerTurrets, index) => {
                 playerTurrets.forEach(({ row, col }, turretIndex) => {
-                    setTimeout(() => {
+                    setInterval(() => {
                         fireTurret(row, col, index);
-                    }, turretIndex * 1000); // Delay firing based on turret index
+                    }, 2000); // Each turret fires every 2 seconds
                 });
             });
         }
 
-        updateHealthBars();
+        updateHealthBars(); // Initial health bar update
     </script>
 </body>
 </html>
