@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Defense Game v1.9</title>
+    <title>Defense Game v1.10</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -56,7 +56,6 @@
             background-color: #ff3e00; /* Bullets */
             border-radius: 50%;
             position: absolute;
-            transition: transform 0.5s linear; /* Faster bullet movement */
         }
         .health-bar {
             height: 10px;
@@ -167,10 +166,13 @@
             startTurretFire(); // Start periodic firing
         }
 
-        // Function to display health bars
+        // Function to display health bars and points
         function updateHealthBars() {
             fort1HealthBar.style.width = `${(playerFortHealth[0] / 10) * 100}%`;
             fort2HealthBar.style.width = `${(playerFortHealth[1] / 10) * 100}%`;
+
+            player1PointsDisplay.textContent = playerPoints[0];
+            player2PointsDisplay.textContent = playerPoints[1];
 
             const cells = document.querySelectorAll('.cell');
             cells.forEach(cell => {
@@ -239,24 +241,20 @@
         function moveBullet(bullet, target) {
             const bulletInterval = setInterval(() => {
                 const bulletRect = bullet.getBoundingClientRect();
-                const targetRect = target.getBoundingClientRect();
-
-                const bulletCenter = {
-                    x: bulletRect.x + bulletRect.width / 2,
-                    y: bulletRect.y + bulletRect.height / 2,
-                };
                 const targetCenter = {
                     x: target.x * 75 + 30,
                     y: target.y * 75 + 30,
                 };
 
-                const dx = targetCenter.x - bulletCenter.x;
-                const dy = targetCenter.y - bulletCenter.y;
+                const dx = targetCenter.x - bulletRect.x - bulletRect.width / 2;
+                const dy = targetCenter.y - bulletRect.y - bulletRect.height / 2;
+
                 const angle = Math.atan2(dy, dx);
                 const speed = 5; // Speed of the bullet
 
-                bullet.style.transform = `translate(${dx * speed / 100}px, ${dy * speed / 100}px)`;
+                bullet.style.transform = `translate(${Math.cos(angle) * speed}px, ${Math.sin(angle) * speed}px)`;
 
+                // Check if bullet has reached the target
                 if (Math.abs(dx) < 10 && Math.abs(dy) < 10) {
                     clearInterval(bulletInterval);
                     applyDamage(target); // Apply damage to the target
