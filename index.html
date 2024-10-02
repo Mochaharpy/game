@@ -292,18 +292,23 @@
             updateHealthBars();
         }
 
-        function resetGame() {
-            currentPlayer = 1;
-            playerFortHealth = [10, 10];
-            turretHealth = [3, 3];
-            playerPoints = [12, 12];
-            boardState = Array(gridSize).fill().map(() => Array(gridSize).fill(null));
-            document.querySelectorAll('.bullet').forEach(bullet => bullet.remove());
-            endScreen.style.display = 'none'; // Hide end screen
-            initializeBoard(); // Reinitialize the board
-            document.querySelectorAll('.cell').forEach(cell => cell.style.pointerEvents = 'auto'); // Enable actions
-        }
+       function resetGame() {
+    currentPlayer = 1;
+    playerFortHealth = [10, 10];
+    turretHealth = [3, 3];
+    playerPoints = [12, 12];
+    boardState = Array(gridSize).fill().map(() => Array(gridSize).fill(null));
 
+    // Reinitialize forts
+    boardState[fort1.row][fort1.col] = 'Fort1';
+    boardState[fort2.row][fort2.col] = 'Fort2';
+
+    document.querySelectorAll('.bullet').forEach(bullet => bullet.remove());
+    endScreen.style.display = 'none'; // Hide end screen
+    initializeBoard(); // Reinitialize the board
+    document.querySelectorAll('.cell').forEach(cell => cell.style.pointerEvents = 'auto'); // Enable actions
+}
+        
         function startTurretFire() {
             setInterval(() => {
                 turrets.forEach((playerTurrets, index) => {
