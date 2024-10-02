@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Defense Game v1.15</title>
+    <title>Defense Game v1.16</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -80,6 +80,9 @@
             justify-content: space-between;
             width: 100%;
         }
+        .points {
+            margin-right: 10px;
+        }
     </style>
 </head>
 <body>
@@ -87,13 +90,13 @@
         <h1>Defense Game</h1>
         <div class="points-container">
             <div>
-                <p>Player 1 Points: <span id="player1Points">12</span></p>
+                <div class="points">Player 2 Points: <span id="player2Points">12</span></div>
                 <div class="health-bar" id="fort1HealthContainer">
                     <div class="health" id="fort1Health" style="width: 100%;"></div>
                 </div>
             </div>
             <div>
-                <p>Player 2 Points: <span id="player2Points">12</span></p>
+                <div class="points">Player 1 Points: <span id="player1Points">12</span></div>
                 <div class="health-bar" id="fort2HealthContainer">
                     <div class="health" id="fort2Health" style="width: 100%;"></div>
                 </div>
