@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fort Defense Game</title>
+    <title>Fort Defense Game v1.1</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -39,17 +39,17 @@
             position: relative;
         }
         .fort {
-            background-color: lightblue; /* Softer blue for Player 1 Fort */
+            background-color: #8ecae6; /* Softer blue for Player 1 Fort */
             position: relative;
         }
         .turret {
-            background-color: lightcoral; /* Softer red for Player 1 Turrets */
+            background-color: #f77f00; /* Softer red for Player 1 Turrets */
             position: relative;
         }
         .bullet {
             width: 10px;
             height: 10px;
-            background-color: lightcoral; /* Softer red for bullets */
+            background-color: #ff3e00; /* Softer red for bullets */
             border-radius: 50%;
             position: absolute;
             transition: transform 1s; /* Slower bullet */
@@ -174,7 +174,7 @@
                     cell.classList.add('turret');
                     const playerIndex = cell.textContent.endsWith('1') ? 0 : 1;
                     const healthDisplay = '-'.repeat(turretHealth[playerIndex]);
-                    cell.innerHTML += `<div class="turret-health">Health: ${healthDisplay}</div>`;
+                    cell.innerHTML += `<div class="turret-health">${healthDisplay}</div>`;
                 }
             });
         }
@@ -218,7 +218,7 @@
             const bullet = document.createElement('div');
             bullet.className = 'bullet';
             turretCell.appendChild(bullet);
-
+            
             const target = findTarget(playerIndex);
             if (target) {
                 const targetCell = document.querySelector(`.cell[data-row="${target.row}"][data-col="${target.col}"]`);
