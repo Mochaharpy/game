@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Defense Game v1.7</title>
+    <title>Defense Game v1.9</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -16,8 +16,8 @@
         }
         .game-container {
             display: flex;
-            flex-direction: column;
-            align-items: center;
+            flex-direction: row;
+            align-items: flex-start;
             margin: 20px;
         }
         .board {
@@ -25,7 +25,7 @@
             grid-template-columns: repeat(9, 80px);
             grid-template-rows: repeat(9, 80px);
             gap: 5px;
-            margin: 20px 0;
+            margin: 20px;
         }
         .cell {
             width: 80px;
@@ -38,16 +38,24 @@
             cursor: pointer;
             position: relative;
         }
-        .fort { background-color: #8ecae6; }
-        .turret { background-color: #0077b6; }
-        .fort2, .turret2 { background-color: #ff6f61; }
+        .fort {
+            background-color: #8ecae6; /* Player 1 Fort */
+            position: relative;
+        }
+        .turret {
+            background-color: #0077b6; /* Player 1 Turrets */
+            position: relative;
+        }
+        .fort2, .turret2 {
+            background-color: #ff6f61; /* Player 2 Structures */
+        }
         .bullet {
             width: 10px;
             height: 10px;
-            background-color: #ff3e00;
+            background-color: #ff3e00; /* Bullets */
             border-radius: 50%;
             position: absolute;
-            transition: transform 1s; /* Slower bullet */
+            transition: transform 2s; /* Slower bullet */
         }
         .health-bar {
             height: 10px;
@@ -56,8 +64,14 @@
             border: 1px solid #aaa;
             margin: 5px 0;
         }
-        .health { height: 100%; background-color: green; }
-        .turret-health { font-size: 12px; color: darkred; }
+        .health {
+            height: 100%;
+            background-color: green;
+        }
+        .turret-health {
+            font-size: 12px;
+            color: darkred;
+        }
         .end-screen {
             display: none;
             position: absolute;
@@ -69,13 +83,22 @@
             border: 2px solid black;
             z-index: 10;
         }
-        .reset-button { margin-top: 10px; }
+        .reset-button {
+            margin-top: 10px;
+        }
+        /* Add some margins for health bars */
+        .controls {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-right: 20px;
+        }
     </style>
 </head>
 <body>
     <div class="game-container">
-        <h1>Defense Game</h1>
         <div class="controls">
+            <h1>Defense Game</h1>
             <div>
                 <p>Player 1 Points: <span id="player1Points">12</span></p>
                 <div class="health-bar" id="fort1HealthContainer">
@@ -96,7 +119,7 @@
             <button class="reset-button" onclick="resetGame()">Reset Game</button>
         </div>
     </div>
-    
+
     <script>
         const board = document.getElementById('gameBoard');
         const messageDisplay = document.getElementById('message');
@@ -109,78 +132,80 @@
         const gridSize = 9;
 
         let currentPlayer = 1;
-        let playerFortHealth = [10, 10];
-        let turretHealth = [3, 3];
-        let turrets = [[], []];
-        let playerPoints = [12, 12];
-        let boardState = Array.from({ length: gridSize }, () => Array(gridSize).fill(null));
-        let pointInterval;
+        let playerFortHealth = [10, 10]; // Health for player 1 and 2 forts
+        let turretHealth = [3, 3]; // Health for turrets
+        let turrets = [[], []]; // Array to hold turret positions
+        let playerPoints = [12, 12]; // Points for each player
+        let boardState = Array(gridSize).fill().map(() => Array(gridSize).fill(null));
+        let pointInterval; // Interval for point gain
 
-        const fortPositions = [{ row: 4, col: 0 }, { row: 4, col: gridSize - 1 }];
-        boardState[fortPositions[0].row][fortPositions[0].col] = 'Fort1';
-        boardState[fortPositions[1].row][fortPositions[1].col] = 'Fort2';
+        // Place forts automatically on the left and right
+        const fort1 = { row: 4, col: 0 };
+        const fort2 = { row: 4, col: gridSize - 1 };
+        boardState[fort1.row][fort1.col] = 'Fort1';
+        boardState[fort2.row][fort2.col] = 'Fort2';
 
+        // Initialize the game board
         initializeBoard();
 
         function initializeBoard() {
-            board.innerHTML = '';
+            board.innerHTML = ''; // Clear previous cells
             for (let i = 0; i < gridSize; i++) {
                 for (let j = 0; j < gridSize; j++) {
-                    const cell = createCell(i, j);
+                    const cell = document.createElement('div');
+                    cell.className = 'cell';
+                    cell.dataset.row = i;
+                    cell.dataset.col = j;
+                    cell.addEventListener('click', () => handleCellClick(i, j));
                     board.appendChild(cell);
                 }
             }
+            boardState[fort1.row][fort1.col] = 'Fort1';
+            boardState[fort2.row][fort2.col] = 'Fort2';
             updateHealthBars();
-            startTurretFire();
+            startTurretFire(); // Start periodic firing
         }
 
-        function createCell(row, col) {
-            const cell = document.createElement('div');
-            cell.className = 'cell';
-            cell.dataset.row = row;
-            cell.dataset.col = col;
-            cell.addEventListener('click', () => handleCellClick(row, col));
-            if (boardState[row][col]) updateCellClass(cell, row, col);
-            return cell;
-        }
-
-        function updateCellClass(cell, row, col) {
-            cell.textContent = boardState[row][col];
-            cell.classList.remove('fort', 'fort2', 'turret', 'turret2');
-            if (boardState[row][col] === 'Fort1') cell.classList.add('fort');
-            if (boardState[row][col] === 'Fort2') cell.classList.add('fort2');
-            if (boardState[row][col]?.startsWith('Turret')) {
-                const playerIndex = boardState[row][col].endsWith('1') ? 0 : 1;
-                cell.classList.add('turret' + (playerIndex + 1));
-                const healthDisplay = '-'.repeat(turretHealth[playerIndex]);
-                cell.innerHTML += `<div class="turret-health">${healthDisplay}</div>`;
-            }
-        }
-
+        // Function to display health bars
         function updateHealthBars() {
             fort1HealthBar.style.width = `${(playerFortHealth[0] / 10) * 100}%`;
             fort2HealthBar.style.width = `${(playerFortHealth[1] / 10) * 100}%`;
-            player1PointsDisplay.textContent = playerPoints[0];
-            player2PointsDisplay.textContent = playerPoints[1];
-            updateBoardDisplay();
-        }
 
-        function updateBoardDisplay() {
             const cells = document.querySelectorAll('.cell');
             cells.forEach(cell => {
                 const row = cell.dataset.row;
                 const col = cell.dataset.col;
-                if (boardState[row][col]) updateCellClass(cell, row, col);
-                else cell.textContent = '';
+                cell.textContent = boardState[row][col] || '';
+                cell.classList.remove('fort', 'fort2', 'turret', 'turret2');
+                if (boardState[row][col] === 'Fort1') {
+                    cell.classList.add('fort');
+                } else if (boardState[row][col] === 'Fort2') {
+                    cell.classList.add('fort2');
+                } else if (cell.textContent.startsWith('Turret')) {
+                    const playerIndex = cell.textContent.endsWith('1') ? 0 : 1;
+                    cell.classList.add('turret' + (playerIndex + 1));
+                    const healthDisplay = '-'.repeat(turretHealth[playerIndex]);
+                    cell.innerHTML += `<div class="turret-health">${healthDisplay}</div>`;
+                }
             });
         }
 
         function handleCellClick(row, col) {
-            if (!boardState[row][col] && canPlaceTurret(row, col)) {
-                if (playerPoints[currentPlayer - 1] >= 3) {
-                    placeTurret(row, col);
+            if (boardState[row][col] === null) {
+                if (canPlaceTurret(row, col)) {
+                    if (playerPoints[currentPlayer - 1] >= 3) {
+                        boardState[row][col] = `Turret${currentPlayer}`;
+                        turrets[currentPlayer - 1].push({ row, col });
+                        playerPoints[currentPlayer - 1] -= 3; // Deduct points for placing a turret
+                        playerPoints[currentPlayer - 1]++; // Gain a point for placing a turret
+                        updateHealthBars();
+                        fireTurret(row, col, currentPlayer - 1); // Fire immediately
+                        endTurn(); // End the turn after placing a turret
+                    } else {
+                        messageDisplay.textContent = 'Not enough points to place a turret!';
+                    }
                 } else {
-                    messageDisplay.textContent = 'Not enough points to place a turret!';
+                    messageDisplay.textContent = 'Turrets can only be placed adjacent to your structures!';
                 }
             } else {
                 messageDisplay.textContent = 'Cell already occupied!';
@@ -195,18 +220,8 @@
             return adjacentCells.some(cell => {
                 const { r, c } = cell;
                 return r >= 0 && r < gridSize && c >= 0 && c < gridSize &&
-                    (boardState[r][c]?.startsWith(`Turret${currentPlayer}`) || boardState[r][c] === `Fort${currentPlayer}`);
+                    (boardState[r][c] && boardState[r][c].startsWith(`Turret${currentPlayer}`) || boardState[r][c] === `Fort${currentPlayer}`);
             });
-        }
-
-        function placeTurret(row, col) {
-            boardState[row][col] = `Turret${currentPlayer}`;
-            turrets[currentPlayer - 1].push({ row, col });
-            playerPoints[currentPlayer - 1] -= 3;
-            playerPoints[currentPlayer - 1]++;
-            updateHealthBars();
-            fireTurret(row, col, currentPlayer - 1);
-            endTurn();
         }
 
         function fireTurret(row, col, playerIndex) {
@@ -214,74 +229,81 @@
             if (turretCell) {
                 const target = findTarget(playerIndex);
                 if (target) {
-                    createBullet(turretCell, target);
+                    const bullet = document.createElement('div');
+                    bullet.className = 'bullet';
+                    turretCell.appendChild(bullet);
+
+                    const targetCell = document.querySelector(`.cell[data-row="${target.row}"][data-col="${target.col}"]`);
+                    const dx = targetCell.offsetLeft - turretCell.offsetLeft;
+                    const dy = targetCell.offsetTop - turretCell.offsetTop;
+
+                    bullet.style.transform = `translate(${dx}px, ${dy}px)`;
+
+                    setTimeout(() => {
+                        if (targetCell) {
+                            damageStructure(target.row, target.col, playerIndex);
+                        }
+                        bullet.remove(); // Remove the bullet on impact
+                    }, 2000); // Bullet takes 2 seconds to reach the target
                 }
             }
         }
 
-        function createBullet(turretCell, target) {
-            const bullet = document.createElement('div');
-            bullet.className = 'bullet';
-            turretCell.appendChild(bullet);
-
-            const targetCell = document.querySelector(`.cell[data-row="${target.row}"][data-col="${target.col}"]`);
-            const dx = targetCell.offsetLeft - turretCell.offsetLeft;
-            const dy = targetCell.offsetTop - turretCell.offsetTop;
-
-            bullet.style.transform = `translate(${dx}px, ${dy}px)`;
-
-            bullet.addEventListener('transitionend', () => {
-                bullet.remove();
-                checkCollision(target);
-            });
-        }
-
-        function checkCollision(target) {
-            const targetCell = boardState[target.row][target.col];
-            if (targetCell === `Fort${getOpponent() + 1}`) {
-                playerFortHealth[getOpponent()]--;
-                if (playerFortHealth[getOpponent()] <= 0) endGame(getOpponent() + 1);
-            } else if (targetCell?.startsWith('Turret')) {
-                const turretIndex = getOpponent();
-                turretHealth[turretIndex]--;
-                if (turretHealth[turretIndex] <= 0) destroyTurret(target);
-            }
-            updateHealthBars();
-        }
-
-        function destroyTurret(target) {
-            const { row, col } = target;
-            boardState[row][col] = null;
-            playerPoints[getOpponent()] += 3;
-            updateHealthBars();
-        }
-
         function findTarget(playerIndex) {
-            const opponentIndex = getOpponent();
+            const opponentIndex = playerIndex === 0 ? 1 : 0;
+
+            // Check for the nearest fort first
             for (let i = 0; i < gridSize; i++) {
                 for (let j = 0; j < gridSize; j++) {
-                    if (boardState[i][j] === `Fort${opponentIndex + 1}` || 
-                        (boardState[i][j]?.startsWith('Turret') && !boardState[i][j].endsWith(`${playerIndex + 1}`))) {
+                    if (boardState[i][j] === `Fort${opponentIndex + 1}`) {
+                        return { row: i, col: j }; // Prioritize the fort
+                    }
+                }
+            }
+
+            // Check for turrets if no fort found
+            for (let i = 0; i < gridSize; i++) {
+                for (let j = 0; j < gridSize; j++) {
+                    if (boardState[i][j] && boardState[i][j].startsWith('Turret') && boardState[i][j] !== `Turret${playerIndex + 1}`) {
                         return { row: i, col: j };
                     }
                 }
             }
-            return null;
+
+            return null; // No target found
         }
 
-        function getOpponent() {
-            return currentPlayer === 1 ? 1 : 0;
+        function damageStructure(row, col, playerIndex) {
+            if (boardState[row][col] === `Fort${(playerIndex === 0 ? 2 : 1)}`) {
+                playerFortHealth[playerIndex === 0 ? 1 : 0]--;
+                if (playerFortHealth[playerIndex === 0 ? 1 : 0] <= 0) {
+                    endGame(playerIndex + 1);
+                }
+            } else if (boardState[row][col] && boardState[row][col].startsWith('Turret')) {
+                turretHealth[playerIndex === 0 ? 1 : 0]--; // Reduce turret health
+                if (turretHealth[playerIndex === 0 ? 1 : 0] <= 0) {
+                    const turretRow = row;
+                    const turretCol = col;
+                    boardState[turretRow][turretCol] = null; // Destroy the turret
+                    playerPoints[playerIndex === 0 ? 1 : 0] += 3; // Reward points
+                    updateHealthBars();
+                    // Reset the cell's content to remove the highlight
+                    const turretCell = document.querySelector(`.cell[data-row="${turretRow}"][data-col="${turretCol}"]`);
+                    turretCell.textContent = ''; // Clear the content
+                }
+            }
+            updateHealthBars();
         }
 
         function endGame(winner) {
             winnerMessage.textContent = `Player ${winner} wins!`;
-            endScreen.style.display = 'block';
-            clearInterval(pointInterval);
-            document.querySelectorAll('.cell').forEach(cell => cell.style.pointerEvents = 'none');
+            endScreen.style.display = 'block'; // Show end screen
+            clearInterval(pointInterval); // Stop point gain
+            document.querySelectorAll('.cell').forEach(cell => cell.style.pointerEvents = 'none'); // Disable further actions
         }
 
         function endTurn() {
-            currentPlayer = currentPlayer === 1 ? 2 : 1;
+            currentPlayer = currentPlayer === 1 ? 2 : 1; // Switch players
             updateHealthBars();
         }
 
@@ -290,27 +312,32 @@
             playerFortHealth = [10, 10];
             turretHealth = [3, 3];
             playerPoints = [12, 12];
-            boardState = Array.from({ length: gridSize }, () => Array(gridSize).fill(null));
-            endScreen.style.display = 'none';
-            initializeBoard();
-            document.querySelectorAll('.cell').forEach(cell => cell.style.pointerEvents = 'auto');
+            boardState = Array(gridSize).fill().map(() => Array(gridSize).fill(null));
+            document.querySelectorAll('.bullet').forEach(bullet => bullet.remove());
+            endScreen.style.display = 'none'; // Hide end screen
+            initializeBoard(); // Reinitialize the board
+            document.querySelectorAll('.cell').forEach(cell => cell.style.pointerEvents = 'auto'); // Enable actions
         }
 
         function startTurretFire() {
             setInterval(() => {
                 turrets.forEach((playerTurrets, index) => {
-                    playerTurrets.forEach(({ row, col }) => fireTurret(row, col, index));
+                    playerTurrets.forEach(({ row, col }) => {
+                        fireTurret(row, col, index);
+                    });
                 });
-            }, 2000);
+            }, 2000); // Turrets fire every 2 seconds
         }
 
+        // Start point gain
         pointInterval = setInterval(() => {
             playerPoints[0]++;
             playerPoints[1]++;
-            updateHealthBars();
-        }, 5000);
+            playerPointsDisplay.textContent = playerPoints[0];
+            playerPointsDisplay.textContent = playerPoints[1];
+        }, 5000); // Gain points every 5 seconds
 
-        updateHealthBars();
+        updateHealthBars(); // Initial health bar update
     </script>
 </body>
 </html>
