@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Defense Game v1.15</title>
+    <title>Defense Game v1.16</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -208,12 +208,12 @@
             if (turretCell) {
                 const target = findTarget(playerIndex);
                 if (target) {
-                    createBullet(turretCell, target, playerIndex);
+                    createBullet(turretCell, target);
                 }
             }
         }
 
-        function createBullet(turretCell, target, playerIndex) {
+        function createBullet(turretCell, target) {
             const bullet = document.createElement('div');
             bullet.className = 'bullet';
             bullet.style.left = `${turretCell.offsetLeft + 30}px`;
