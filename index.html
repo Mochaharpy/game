@@ -305,14 +305,72 @@
         }
 
         // Start turret firing with intervals
-        function startTurretFire() {
-            turrets.forEach((playerTurrets, index) => {
-                playerTurrets.forEach(({ row, col }) => {
-                    setInterval(() => fireTurret(row, col, index), Math.random() * 3000 + 1000); // Fire every 1 to 4 seconds
-                });
-            });
+        // Modify the firing interval for turrets
+function startTurretFire() {
+    turrets.forEach((playerTurrets, index) => {
+        playerTurrets.forEach(({ row, col }) => {
+            setInterval(() => {
+                fireTurret(row, col, index);
+            }, 2000 + Math.random() * 1000); // Randomize firing time slightly
+        });
+    });
+}
+
+// Update fireTurret function to include bullet movement speed
+function fireTurret(row, col, playerIndex) {
+        const turretCell = document.querySelector(`.cell[data-row="${row}"][data-col="${col}"]`);
+            if (turretCell) {
+                const target = findTarget(playerIndex);
+                if (target) {
+                    const bullet = document.createElement('div');
+                    bullet.className = 'bullet';
+                    turretCell.appendChild(bullet);
+
+                    // Calculate the bullet movement direction and speed
+                    const targetCell = document.querySelector(`.cell[data-row="${target.row}"][data-col="${target.col}"]`);
+                    const dx = targetCell.offsetLeft - turretCell.offsetLeft;
+                    const dy = targetCell.offsetTop - turretCell.offsetTop;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+                    const bulletSpeed = 400; // Speed in pixels per second
+                    const duration = (distance / bulletSpeed) * 1000; // Convert to milliseconds
+
+                        // Use CSS transition for bullet movement
+                    bullet.style.transform = `translate(${dx}px, ${dy}px)`;
+                    bullet.style.transition = `transform ${duration}ms linear`;
+
+                    bullet.addEventListener('transitionend', () => {
+                        // Damage logic and bullet removal
+                        if (damageStructure(target.row, target.col, playerIndex)) {
+                            bullet.remove(); // Remove bullet on impact
+                        } else {
+                            bullet.remove(); // If no damage, remove bullet
+                        }
+                    });
+                }
+            }
         }
 
+        // Update the damageStructure function to handle bullet collision
+        function damageStructure(row, col, playerIndex) {
+            if (boardState[row][col] === `Fort${(playerIndex === 0 ? 2 : 1)}`) {
+                playerFortHealth[playerIndex === 0 ? 1 : 0]--;
+                if (playerFortHealth[playerIndex === 0 ? 1 : 0] <= 0) {
+                    endGame(playerIndex + 1);
+                }
+                return true; // Damage dealt
+            } else if (boardState[row][col] && boardState[row][col].startsWith('Turret')) {
+                turretHealth[playerIndex === 0 ? 1 : 0]--; // Reduce turret health
+                if (turretHealth[playerIndex === 0 ? 1 : 0] <= 0) {
+                    const turretRow = row;
+                    const turretCol = col;
+                    boardState[turretRow][turretCol] = null; // Destroy the turret
+                    playerPoints[playerIndex === 0 ? 1 : 0] += 3; // Reward points
+                    updateHealthBars();
+                }
+                return true; // Damage dealt
+            }
+            return false; // No damage dealt
+        }
         updateHealthBars();
         startTurretFire(); // Begin turret firing
     </script>
