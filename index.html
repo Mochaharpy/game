@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Defense Game v1.15</title>
+    <title>Defense Game v1.14</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -244,9 +244,17 @@
                 if (currentRow >= 0 && currentRow < gridSize && currentCol >= 0 && currentCol < gridSize) {
                     const structure = boardState[currentRow][currentCol];
                     if (structure) {
-                        clearInterval(interval); // Stop the bullet
-                        handleHit(currentRow, currentCol, playerIndex);
-                        bullet.remove(); // Remove bullet after hit
+                        // Check if the turret that fired the bullet still exists
+                        const turretIndex = boardState[row][col].endsWith('1') ? 0 : 1;
+                        if (turrets[turretIndex].some(t => t.row === row && t.col === col)) {
+                            clearInterval(interval); // Stop the bullet
+                            handleHit(currentRow, currentCol, playerIndex);
+                            bullet.remove(); // Remove bullet after hit
+                        } else {
+                            // The turret has been destroyed; remove the bullet
+                            clearInterval(interval);
+                            bullet.remove();
+                        }
                     }
                 }
 
@@ -260,31 +268,22 @@
 
         function findTarget(playerIndex) {
             const targetPlayerIndex = playerIndex === 0 ? 1 : 0;
-            const targetFortRow = targetPlayerIndex === 0 ? fort2.row : fort1.row;
-            const targetFortCol = targetPlayerIndex === 0 ? fort2.col : fort1.col;
-
-            // Ensure the target is not their own structure
-            return { row: targetFortRow, col: targetFortCol };
+            const targetFort = boardState[targetPlayerIndex === 0 ? fort2.row : fort1.row][targetPlayerIndex === 0 ? fort2.col : fort1.col];
+            return { row: targetPlayerIndex === 0 ? fort2.row : fort1.row, col: targetPlayerIndex === 0 ? fort2.col : fort1.col };
         }
 
         function handleHit(row, col, playerIndex) {
             const structure = boardState[row][col];
             if (structure === 'Fort1' || structure === 'Fort2') {
-                // Avoid hitting own fort
-                if ((playerIndex === 0 && structure === 'Fort1') || (playerIndex === 1 && structure === 'Fort2')) {
-                    return; // Ignore self-hits
-                }
                 playerFortHealth[playerIndex]--;
                 if (playerFortHealth[playerIndex] <= 0) {
                     endGame(playerIndex);
                 }
             } else if (structure.startsWith('Turret')) {
                 const turretIndex = structure.endsWith('1') ? 0 : 1;
-                if (turretIndex !== playerIndex) { // Prevent self-hitting
-                    turretHealth[turretIndex]--;
-                    if (turretHealth[turretIndex] <= 0) {
-                        removeTurret(row, col);
-                    }
+                turretHealth[turretIndex]--;
+                if (turretHealth[turretIndex] <= 0) {
+                    removeTurret(row, col);
                 }
             }
             updateHealthBars();
