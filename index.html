@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Defense Game v1.21</title>
+    <title>Defense Game v1.22</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -99,7 +99,7 @@
 </head>
 <body>
     <div class="game-container">
-        <h1>Defense Game v1.21</h1>
+        <h1>Defense Game v1.22</h1>
         <div class="points-container">
             <div>
                 <p>Player 1 Points: <span id="player1Points">12</span></p>
@@ -239,8 +239,8 @@
                 bullets.push(bullet); // Store bullet reference
                 board.appendChild(bullet);
 
-                const targetX = target.col * 70 + 35;
-                const targetY = target.row * 70 + 35;
+                const targetX = target.col * 70 + 35; // Center of target
+                const targetY = target.row * 70 + 35; // Center of target
                 const dx = targetX - (col * 70 + 35);
                 const dy = targetY - (row * 70 + 35);
                 const distance = Math.sqrt(dx * dx + dy * dy);
@@ -260,7 +260,7 @@
                     // Check if the bullet hits a turret
                     for (let t of turrets[1 - playerIndex]) {
                         if (t.row === target.row && t.col === target.col && 
-                            isColliding(bullet.getBoundingClientRect(), t)) {
+                            isColliding(bullet.getBoundingClientRect(), document.querySelector(`.cell[data-row="${t.row}"][data-col="${t.col}"]`))) {
                             clearInterval(interval);
                             bullet.remove();
                             bullets = bullets.filter(b => b !== bullet); // Remove bullet reference
@@ -281,11 +281,12 @@
         }
 
         function isColliding(rect1, rect2) {
+            const rect2Bounds = rect2.getBoundingClientRect();
             return !(
-                rect1.right < rect2.left ||
-                rect1.left > rect2.right ||
-                rect1.bottom < rect2.top ||
-                rect1.top > rect2.bottom
+                rect1.right < rect2Bounds.left ||
+                rect1.left > rect2Bounds.right ||
+                rect1.bottom < rect2Bounds.top ||
+                rect1.top > rect2Bounds.bottom
             );
         }
 
