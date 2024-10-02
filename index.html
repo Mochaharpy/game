@@ -26,6 +26,7 @@
             grid-template-rows: repeat(9, 70px);
             gap: 5px;
             margin: 20px 0;
+            position: relative; /* Allows absolute positioning for bullets */
         }
         .cell {
             width: 70px;
@@ -211,11 +212,19 @@
                 if (target) {
                     const bullet = document.createElement('div');
                     bullet.className = 'bullet';
-                    turretCell.appendChild(bullet);
+                    document.body.appendChild(bullet); // Render bullet above the grid
 
                     const targetCell = document.querySelector(`.cell[data-row="${target.row}"][data-col="${target.col}"]`);
-                    const dx = targetCell.offsetLeft - turretCell.offsetLeft;
-                    const dy = targetCell.offsetTop - turretCell.offsetTop;
+                    const turretPosition = turretCell.getBoundingClientRect();
+                    const targetPosition = targetCell.getBoundingClientRect();
+
+                    // Calculate bullet starting position
+                    bullet.style.left = `${turretPosition.left + turretPosition.width / 2 - 5}px`;
+                    bullet.style.top = `${turretPosition.top + turretPosition.height / 2 - 5}px`;
+
+                    // Calculate bullet movement
+                    const dx = targetPosition.left + targetPosition.width / 2 - (turretPosition.left + turretPosition.width / 2);
+                    const dy = targetPosition.top + targetPosition.height / 2 - (turretPosition.top + turretPosition.height / 2);
 
                     bullet.style.transform = `translate(${dx}px, ${dy}px)`;
 
@@ -292,13 +301,13 @@
         }
 
         function startTurretFire() {
-            setInterval(() => {
-                turrets.forEach((playerTurrets, index) => {
-                    playerTurrets.forEach(({ row, col }) => {
+            turrets.forEach((playerTurrets, index) => {
+                playerTurrets.forEach(({ row, col }, turretIndex) => {
+                    setTimeout(() => {
                         fireTurret(row, col, index);
-                    });
+                    }, turretIndex * 1000); // Delay firing based on turret index
                 });
-            }, 2000); // Turrets fire every 2 seconds
+            });
         }
 
         updateHealthBars();
