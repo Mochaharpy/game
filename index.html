@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Defense Game v1.17</title>
+    <title>Defense Game v1.19</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -57,8 +57,20 @@
             margin: 5px 0;
             position: relative;
         }
-        .health { height: 100%; background-color: green; }
-        .missing-health { position: absolute; top: 0; left: 0; height: 100%; background-color: red; }
+        .health {
+            height: 100%;
+            background-color: green;
+            position: absolute;
+            left: 0;
+            top: 0;
+        }
+        .missing-health {
+            height: 100%;
+            background-color: red;
+            position: absolute;
+            right: 0;
+            top: 0;
+        }
         .turret-health {
             font-size: 12px;
             color: darkred;
@@ -86,7 +98,7 @@
 </head>
 <body>
     <div class="game-container">
-        <h1>Defense Game v1.17</h1>
+        <h1>Defense Game v1.19</h1>
         <div class="points-container">
             <div>
                 <p>Player 1 Points: <span id="player1Points">12</span></p>
@@ -207,8 +219,9 @@
             ];
             return adjacentCells.some(cell => {
                 const { r, c } = cell;
-                return r >= 0 && r < gridSize && c >= 0 && c < gridSize &&
-                    (boardState[r][c] && boardState[r][c].startsWith(`Turret${currentPlayer}`) || boardState[r][c].startsWith(`Fort${currentPlayer}`));
+                return (r >= 0 && r < gridSize && c >= 0 && c < gridSize && 
+                        (boardState[r][c] === 'Fort' + currentPlayer || 
+                         boardState[r][c] === 'Turret' + currentPlayer));
             });
         }
 
@@ -217,21 +230,21 @@
             if (target) {
                 const bullet = document.createElement('div');
                 bullet.className = 'bullet';
-                bullet.style.left = `${col * 70 + 30}px`;
-                bullet.style.top = `${row * 70 + 30}px`;
+                bullet.style.left = `${col * 70 + 35}px`;
+                bullet.style.top = `${row * 70 + 35}px`;
                 board.appendChild(bullet);
 
-                const targetX = target.col * 70 + 30;
-                const targetY = target.row * 70 + 30;
-                const dx = targetX - (col * 70 + 30);
-                const dy = targetY - (row * 70 + 30);
+                const targetX = target.col * 70 + 35;
+                const targetY = target.row * 70 + 35;
+                const dx = targetX - (col * 70 + 35);
+                const dy = targetY - (row * 70 + 35);
                 const distance = Math.sqrt(dx * dx + dy * dy);
                 const steps = Math.floor(distance / 5);
                 const stepX = dx / steps;
                 const stepY = dy / steps;
 
-                let currentX = col * 70 + 30;
-                let currentY = row * 70 + 30;
+                let currentX = col * 70 + 35;
+                let currentY = row * 70 + 35;
 
                 const interval = setInterval(() => {
                     currentX += stepX;
@@ -241,7 +254,8 @@
 
                     // Check if the bullet hits a turret
                     for (let t of turrets[1 - playerIndex]) {
-                        if (t.row === target.row && t.col === target.col && bullet.getBoundingClientRect().intersects(t.getBoundingClientRect())) {
+                        if (t.row === target.row && t.col === target.col && 
+                            isColliding(bullet.getBoundingClientRect(), t)) {
                             clearInterval(interval);
                             bullet.remove();
                             handleHit(target.row, target.col, 1 - playerIndex);
@@ -259,6 +273,15 @@
             }
         }
 
+        function isColliding(rect1, rect2) {
+            return !(
+                rect1.right < rect2.left ||
+                rect1.left > rect2.right ||
+                rect1.bottom < rect2.top ||
+                rect1.top > rect2.bottom
+            );
+        }
+
         function findNearestEnemyStructure(playerIndex) {
             const targetPlayerIndex = playerIndex === 0 ? 1 : 0;
             let nearest = null;
@@ -268,7 +291,7 @@
             for (let row = 0; row < gridSize; row++) {
                 for (let col = 0; col < gridSize; col++) {
                     const structure = boardState[row][col];
-                    if (structure && (structure.startsWith('Fort') || structure.startsWith('Turret2'))) {
+                    if (structure && (structure.startsWith('Fort') || structure.startsWith('Turret' + (targetPlayerIndex + 1)))) {
                         const distance = Math.abs(row - (targetPlayerIndex === 1 ? fort2.row : fort1.row)) +
                                          Math.abs(col - (targetPlayerIndex === 1 ? fort2.col : fort1.col));
                         if (distance < nearestDistance) {
