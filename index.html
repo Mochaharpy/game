@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Defense Game v1.14</title>
+    <title>Defense Game v1.15</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -204,7 +204,7 @@
         }
 
         function fireTurret(row, col, playerIndex) {
-            const target = findNearestTarget(playerIndex);
+            const target = findNearestEnemyStructure(playerIndex);
             if (target) {
                 createBullet(row, col, target.row, target.col);
             }
@@ -213,15 +213,15 @@
         function createBullet(turretRow, turretCol, targetRow, targetCol) {
             const bullet = document.createElement('div');
             bullet.className = 'bullet';
-            bullet.style.left = `${turretCol * 70 + 30}px`;
-            bullet.style.top = `${turretRow * 70 + 30}px`;
+            bullet.style.left = `${turretCol * 70 + 30}px`; // Center of turret
+            bullet.style.top = `${turretRow * 70 + 30}px`; // Center of turret
             board.appendChild(bullet);
 
             const targetX = targetCol * 70 + 35; // Center of target cell
-            const targetY = targetRow * 70 + 35;
+            const targetY = targetRow * 70 + 35; // Center of target cell
 
-            const dx = targetX - (turretCol * 70 + 35);
-            const dy = targetY - (turretRow * 70 + 35);
+            const dx = targetX - (turretCol * 70 + 30);
+            const dy = targetY - (turretRow * 70 + 30);
             const distance = Math.sqrt(dx * dx + dy * dy);
             const steps = Math.floor(distance / 5); // Number of steps to take
             const stepX = dx / steps;
@@ -236,18 +236,36 @@
                 bullet.style.left = `${currentX}px`;
                 bullet.style.top = `${currentY}px`;
 
+                // Check if the bullet has reached the target
                 if (Math.abs(currentX - targetX) < 5 && Math.abs(currentY - targetY) < 5) {
                     clearInterval(interval);
                     bullet.remove();
                     handleHit(targetRow, targetCol, currentPlayer - 1);
                 }
-            }, 20);
+            }, 20); // Adjust timing for smoother animation
         }
 
-        function findNearestTarget(playerIndex) {
+        function findNearestEnemyStructure(playerIndex) {
             const targetPlayerIndex = playerIndex === 0 ? 1 : 0;
-            const targetFort = { row: targetPlayerIndex === 0 ? fort2.row : fort1.row, col: targetPlayerIndex === 0 ? fort2.col : fort1.col };
-            return targetFort; // Currently just targets the fort
+            let nearest = null;
+            let nearestDistance = Infinity;
+
+            // Check all cells to find the nearest enemy structure
+            for (let row = 0; row < gridSize; row++) {
+                for (let col = 0; col < gridSize; col++) {
+                    const structure = boardState[row][col];
+                    if (structure && (structure.startsWith('Fort') || structure.startsWith('Turret2'))) {
+                        const distance = Math.abs(row - (currentPlayer === 1 ? fort2.row : fort1.row)) +
+                                         Math.abs(col - (currentPlayer === 1 ? fort2.col : fort1.col));
+                        if (distance < nearestDistance) {
+                            nearestDistance = distance;
+                            nearest = { row, col };
+                        }
+                    }
+                }
+            }
+
+            return nearest;
         }
 
         function handleHit(row, col, playerIndex) {
@@ -257,7 +275,20 @@
                 if (playerFortHealth[playerIndex] <= 0) {
                     endGame(playerIndex);
                 }
+            } else if (structure.startsWith('Turret')) {
+                const turretIndex = structure.endsWith('1') ? 0 : 1;
+                turretHealth[turretIndex]--;
+                if (turretHealth[turretIndex] <= 0) {
+                    removeTurret(row, col);
+                }
             }
+            updateHealthBars();
+        }
+
+        function removeTurret(row, col) {
+            const turretIndex = boardState[row][col].endsWith('1') ? 0 : 1;
+            turrets[turretIndex] = turrets[turretIndex].filter(t => !(t.row === row && t.col === col));
+            boardState[row][col] = null;
             updateHealthBars();
         }
 
