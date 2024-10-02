@@ -228,7 +228,7 @@
             const dx = target.col * 70 + 35 - (turretCell.offsetLeft + 35);
             const dy = target.row * 70 + 35 - (turretCell.offsetTop + 35);
             const distance = Math.sqrt(dx * dx + dy * dy);
-            const duration = distance / 100; // Adjust speed
+            const duration = distance / 200; // Increase speed
 
             bullet.style.transition = `transform ${duration}s linear`;
             bullet.style.transform = `translate(${dx}px, ${dy}px)`;
