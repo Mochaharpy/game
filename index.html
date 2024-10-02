@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Defense Game v1.14</title>
+    <title>Defense Game v1.15</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -243,7 +243,7 @@
                     const structure = boardState[currentRow][currentCol];
                     if (structure) {
                         clearInterval(interval); // Stop the bullet
-                        handleHit(currentRow, currentCol, playerIndex);
+                        handleHit(currentRow, currentCol, playerIndex, structure); // Pass the structure to handleHit
                         bullet.remove(); // Remove bullet after hit
                     }
                 }
@@ -255,8 +255,11 @@
             }, 20); // Adjust timing for smoother animation
         }
 
-        function handleHit(row, col, playerIndex) {
-            const structure = boardState[row][col];
+        function handleHit(row, col, playerIndex, structure) {
+            // Prevent hitting the turret that fired the bullet
+            if (structure.startsWith(`Turret${playerIndex + 1}`)) {
+                return; // Do nothing if it's the turret that fired
+            }
             if (structure) {
                 if (structure.startsWith('Fort')) {
                     const fortIndex = structure.endsWith('1') ? 0 : 1;
