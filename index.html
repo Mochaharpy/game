@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Defense Game v1.15</title>
+    <title>Defense Game v1.14</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -204,7 +204,7 @@
         }
 
         function fireTurret(row, col, playerIndex) {
-            const target = findTarget(playerIndex);
+            const target = findNearestTarget(playerIndex);
             if (target) {
                 createBullet(row, col, target.row, target.col);
             }
@@ -223,7 +223,7 @@
             const dx = targetX - (turretCol * 70 + 35);
             const dy = targetY - (turretRow * 70 + 35);
             const distance = Math.sqrt(dx * dx + dy * dy);
-            const steps = Math.floor(distance / 5);
+            const steps = Math.floor(distance / 5); // Number of steps to take
             const stepX = dx / steps;
             const stepY = dy / steps;
 
@@ -244,9 +244,10 @@
             }, 20);
         }
 
-        function findTarget(playerIndex) {
+        function findNearestTarget(playerIndex) {
             const targetPlayerIndex = playerIndex === 0 ? 1 : 0;
-            return { row: targetPlayerIndex === 0 ? fort2.row : fort1.row, col: targetPlayerIndex === 0 ? fort2.col : fort1.col };
+            const targetFort = { row: targetPlayerIndex === 0 ? fort2.row : fort1.row, col: targetPlayerIndex === 0 ? fort2.col : fort1.col };
+            return targetFort; // Currently just targets the fort
         }
 
         function handleHit(row, col, playerIndex) {
