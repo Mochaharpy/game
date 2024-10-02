@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Defense Game</title>
+    <title>Defense Game - Version 1.0</title>
     <style>
         body {
             display: flex;
@@ -102,6 +102,11 @@
                     gameBoard.appendChild(cell);
                 }
             }
+            // Initialize forts
+            boardState[0][4] = 'Fort1';
+            boardState[8][4] = 'Fort2';
+            document.querySelector(`.cell[data-row="0"][data-col="4"]`).classList.add('fort');
+            document.querySelector(`.cell[data-row="8"][data-col="4"]`).classList.add('fort');
         }
 
         function placeTurret(row, col) {
@@ -110,15 +115,15 @@
                 player1Points -= 3;
                 document.querySelector(`.cell[data-row="${row}"][data-col="${col}"]`).classList.add('turret');
                 updatePoints();
-                currentPlayer = 2;
                 fireTurret(row, col);
+                currentPlayer = 2;
             } else if (currentPlayer === 2 && player2Points >= 3 && !boardState[row][col]) {
                 boardState[row][col] = 'Turret2';
                 player2Points -= 3;
                 document.querySelector(`.cell[data-row="${row}"][data-col="${col}"]`).classList.add('turret');
                 updatePoints();
-                currentPlayer = 1;
                 fireTurret(row, col);
+                currentPlayer = 1;
             }
         }
 
@@ -128,37 +133,27 @@
             const cell = document.querySelector(`.cell[data-row="${row}"][data-col="${col}"]`);
             cell.appendChild(bullet);
 
-            // Fire in all four diagonal directions
-            const directions = [
-                { x: -1, y: -1 }, { x: -1, y: 1 },
-                { x: 1, y: -1 }, { x: 1, y: 1 }
-            ];
-            directions.forEach(direction => {
-                let bulletX = row;
-                let bulletY = col;
+            const interval = setInterval(() => {
+                if (bullet.style.transform === '') {
+                    bullet.style.transform = `translate(${col * 40}px, ${row * 40}px)`;
+                } else {
+                    bullet.style.transform += 'translate(0, -40px)';
+                }
 
-                const interval = setInterval(() => {
-                    bulletX += direction.x;
-                    bulletY += direction.y;
-
-                    if (bulletX < 0 || bulletY < 0 || bulletX >= gridSize || bulletY >= gridSize || boardState[bulletX][bulletY]) {
-                        clearInterval(interval);
-                        bullet.remove();
-                        return;
-                    }
-
-                    bullet.style.transform = `translate(${bulletY * 40}px, ${bulletX * 40}px)`;
-
-                    if (boardState[bulletX][bulletY] === 'Fort1' || boardState[bulletX][bulletY] === 'Fort2') {
-                        damageFort(bulletX, bulletY);
+                // Check for collision with structures
+                const targetRow = row - 1;
+                if (targetRow >= 0) {
+                    const targetCell = boardState[targetRow][col];
+                    if (targetCell) {
+                        damageStructure(targetRow, col);
                         clearInterval(interval);
                         bullet.remove();
                     }
-                }, 500);
-            });
+                }
+            }, 1000);
         }
 
-        function damageFort(row, col) {
+        function damageStructure(row, col) {
             if (boardState[row][col] === 'Fort1') {
                 playerFortHealth[0]--;
                 updateHealthBars();
