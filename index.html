@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Defense Game v1.14</title>
+    <title>Defense Game v1.15</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -118,7 +118,7 @@
 
         let currentPlayer = 1;
         let playerFortHealth = [10, 10];
-        let turretHealth = [3, 3];
+        let turretHealth = [3, 3]; // Turret health for each player
         let turrets = [[], []];
         let playerPoints = [12, 12];
         let boardState = Array.from({ length: gridSize }, () => Array(gridSize).fill(null));
@@ -236,7 +236,7 @@
                 bullet.style.left = `${bullet.offsetLeft + stepX}px`;
                 bullet.style.top = `${bullet.offsetTop + stepY}px`;
 
-                if (isBulletOutOfBound(bullet) || isBulletHitFort(bullet, playerIndex)) {
+                if (isBulletOutOfBound(bullet) || isBulletHitTurret(bullet, playerIndex) || isBulletHitFort(bullet, playerIndex)) {
                     clearInterval(bulletInterval);
                     bullet.remove();
                 }
@@ -249,6 +249,33 @@
                 offsetLeft < 0 || offsetLeft > (gridSize * 70) ||
                 offsetTop < 0 || offsetTop > (gridSize * 70)
             );
+        }
+
+        function isBulletHitTurret(bullet, playerIndex) {
+            const opponentIndex = playerIndex === 0 ? 1 : 0;
+            for (const turret of turrets[opponentIndex]) {
+                const turretCell = document.querySelector(`.cell[data-row="${turret.row}"][data-col="${turret.col}"]`);
+                const turretRect = turretCell.getBoundingClientRect();
+                const bulletRect = bullet.getBoundingClientRect();
+                const hit = !(
+                    bulletRect.right < turretRect.left ||
+                    bulletRect.left > turretRect.right ||
+                    bulletRect.bottom < turretRect.top ||
+                    bulletRect.top > turretRect.bottom
+                );
+
+                if (hit) {
+                    turretHealth[opponentIndex]--;
+                    if (turretHealth[opponentIndex] <= 0) {
+                        // Remove the turret from the board
+                        boardState[turret.row][turret.col] = null;
+                        turretCell.innerHTML = ''; // Clear the cell content
+                    }
+                    updateHealthBars();
+                    return true; // Bullet hit a turret
+                }
+            }
+            return false; // No turret hit
         }
 
         function isBulletHitFort(bullet, playerIndex) {
@@ -311,7 +338,7 @@
             gameActive = true; // Reset game state
             currentPlayer = 1;
             playerFortHealth = [10, 10];
-            turretHealth = [3, 3];
+            turretHealth = [3, 3]; // Reset turret health
             playerPoints = [12, 12];
             boardState = Array.from({ length: gridSize }, () => Array(gridSize).fill(null));
             // Reset fort positions
