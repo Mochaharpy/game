@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Defense Game v1.15</title>
+    <title>Defense Game v1.16</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -84,7 +84,7 @@
 </head>
 <body>
     <div class="game-container">
-        <h1>Defense Game</h1>
+        <h1>Defense Game v1.16</h1>
         <div class="points-container">
             <div>
                 <p>Player 1 Points: <span id="player1Points">12</span></p>
@@ -126,13 +126,13 @@
         // Fort positions
         const fort1 = { row: 4, col: 0 };
         const fort2 = { row: 4, col: gridSize - 1 };
-        boardState[fort1.row][fort1.col] = 'Fort1';
-        boardState[fort2.row][fort2.col] = 'Fort2';
 
         initializeBoard();
 
         function initializeBoard() {
             board.innerHTML = '';
+            boardState[fort1.row][fort1.col] = 'Fort1';
+            boardState[fort2.row][fort2.col] = 'Fort2';
             for (let i = 0; i < gridSize; i++) {
                 for (let j = 0; j < gridSize; j++) {
                     const cell = document.createElement('div');
@@ -217,13 +217,12 @@
             bullet.style.top = `${turretRow * 70 + 30}px`; // Center of turret
             board.appendChild(bullet);
 
-            const targetX = targetCol * 70 + 35; // Center of target cell
-            const targetY = targetRow * 70 + 35; // Center of target cell
-
+            const targetX = targetCol * 70 + 30;
+            const targetY = targetRow * 70 + 30;
             const dx = targetX - (turretCol * 70 + 30);
             const dy = targetY - (turretRow * 70 + 30);
             const distance = Math.sqrt(dx * dx + dy * dy);
-            const steps = Math.floor(distance / 5); // Number of steps to take
+            const steps = Math.floor(distance / 5);
             const stepX = dx / steps;
             const stepY = dy / steps;
 
@@ -236,13 +235,23 @@
                 bullet.style.left = `${currentX}px`;
                 bullet.style.top = `${currentY}px`;
 
+                // Check if the bullet has hit an enemy turret
+                const hitTurret = turrets[1 - currentPlayer].some(t => t.row === targetRow && t.col === targetCol && bullet.getBoundingClientRect().intersects(t.getBoundingClientRect()));
+                if (hitTurret) {
+                    clearInterval(interval);
+                    bullet.remove();
+                    // Logic for turret health reduction
+                    handleHit(targetRow, targetCol, 1 - currentPlayer);
+                    return;
+                }
+
                 // Check if the bullet has reached the target
                 if (Math.abs(currentX - targetX) < 5 && Math.abs(currentY - targetY) < 5) {
                     clearInterval(interval);
                     bullet.remove();
                     handleHit(targetRow, targetCol, currentPlayer - 1);
                 }
-            }, 20); // Adjust timing for smoother animation
+            }, 20);
         }
 
         function findNearestEnemyStructure(playerIndex) {
@@ -255,8 +264,8 @@
                 for (let col = 0; col < gridSize; col++) {
                     const structure = boardState[row][col];
                     if (structure && (structure.startsWith('Fort') || structure.startsWith('Turret2'))) {
-                        const distance = Math.abs(row - (currentPlayer === 1 ? fort2.row : fort1.row)) +
-                                         Math.abs(col - (currentPlayer === 1 ? fort2.col : fort1.col));
+                        const distance = Math.abs(row - (targetPlayerIndex === 1 ? fort2.row : fort1.row)) +
+                                         Math.abs(col - (targetPlayerIndex === 1 ? fort2.col : fort1.col));
                         if (distance < nearestDistance) {
                             nearestDistance = distance;
                             nearest = { row, col };
@@ -322,6 +331,11 @@
             endScreen.style.display = 'none';
             currentPlayer = 1;
             messageDisplay.textContent = `Player ${currentPlayer}'s turn`;
+
+            // Re-add forts
+            boardState[fort1.row][fort1.col] = 'Fort1';
+            boardState[fort2.row][fort2.col] = 'Fort2';
+            updateHealthBars();
         }
     </script>
 </body>
