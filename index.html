@@ -22,14 +22,14 @@
         }
         .board {
             display: grid;
-            grid-template-columns: repeat(5, 100px);
-            grid-template-rows: repeat(5, 100px);
+            grid-template-columns: repeat(9, 80px);
+            grid-template-rows: repeat(9, 80px);
             gap: 5px;
             margin: 20px 0;
         }
         .cell {
-            width: 100px;
-            height: 100px;
+            width: 80px;
+            height: 80px;
             background-color: #ddd;
             display: flex;
             align-items: center;
@@ -56,6 +56,9 @@
         }
         .controls {
             margin-top: 20px;
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
         }
         .health-bar {
             height: 10px;
@@ -74,23 +77,31 @@
     <div class="game-container">
         <h1>Fort Defense Game</h1>
         <div class="controls">
-            <p>Player 1 Points: <span id="player1Points">12</span></p>
-            <p>Player 2 Points: <span id="player2Points">12</span></p>
+            <div>
+                <p>Player 1 Points: <span id="player1Points">12</span></p>
+                <div class="health-bar">
+                    <div class="health" id="fort1Health" style="width: 100%;"></div>
+                </div>
+            </div>
+            <div>
+                <p>Player 2 Points: <span id="player2Points">12</span></p>
+                <div class="health-bar">
+                    <div class="health" id="fort2Health" style="width: 100%;"></div>
+                </div>
+            </div>
         </div>
         <div class="board" id="gameBoard"></div>
-        <div class="controls">
-            <button id="attack" disabled>Attack!</button>
-            <p id="message"></p>
-        </div>
+        <p id="message"></p>
     </div>
     
     <script>
         const board = document.getElementById('gameBoard');
         const messageDisplay = document.getElementById('message');
-        const attackButton = document.getElementById('attack');
         const player1PointsDisplay = document.getElementById('player1Points');
         const player2PointsDisplay = document.getElementById('player2Points');
-        const gridSize = 5;
+        const fort1HealthBar = document.getElementById('fort1Health');
+        const fort2HealthBar = document.getElementById('fort2Health');
+        const gridSize = 9;
 
         let currentPlayer = 1;
         let playerFortHealth = [10, 10]; // Health for player 1 and 2 forts
@@ -102,8 +113,8 @@
         let pointInterval; // Interval for point gain
 
         // Place forts automatically on the left and right
-        const fort1 = { row: 2, col: 0, health: playerFortHealth[0] };
-        const fort2 = { row: 2, col: gridSize - 1, health: playerFortHealth[1] };
+        const fort1 = { row: 4, col: 0 };
+        const fort2 = { row: 4, col: gridSize - 1 };
         boardState[fort1.row][fort1.col] = 'Fort1';
         boardState[fort2.row][fort2.col] = 'Fort2';
 
@@ -121,6 +132,9 @@
 
         // Function to display health bars
         function updateHealthBars() {
+            fort1HealthBar.style.width = `${(playerFortHealth[0] / 10) * 100}%`;
+            fort2HealthBar.style.width = `${(playerFortHealth[1] / 10) * 100}%`;
+
             const cells = document.querySelectorAll('.cell');
             cells.forEach(cell => {
                 const row = cell.dataset.row;
@@ -129,13 +143,10 @@
                 cell.classList.remove('fort', 'turret');
                 if (boardState[row][col] === 'Fort1') {
                     cell.classList.add('fort');
-                    cell.innerHTML += `<div class="health-bar"><div class="health" style="width: ${(playerFortHealth[0] * 10)}%;"></div></div>`;
                 } else if (boardState[row][col] === 'Fort2') {
                     cell.classList.add('fort');
-                    cell.innerHTML += `<div class="health-bar"><div class="health" style="width: ${(playerFortHealth[1] * 10)}%;"></div></div>`;
                 } else if (cell.textContent.startsWith('Turret')) {
                     cell.classList.add('turret');
-                    cell.innerHTML += `<div class="health-bar"><div class="health" style="width: ${(turretHealth[currentPlayer - 1] * 33.33)}%;"></div></div>`;
                 }
             });
         }
@@ -174,7 +185,6 @@
         }
 
         function endTurn() {
-            // Update points display
             updatePointDisplays();
 
             // Check if current player has no points
@@ -190,10 +200,7 @@
                 attackInterval = setInterval(() => {
                     turrets.forEach((turretArray, playerIndex) => {
                         turretArray.forEach(turret => {
-                            const target = findTarget(playerIndex);
-                            if (target) {
-                                attackStructure(target.row, target.col, playerIndex);
-                            }
+                            attackStructure(turret.row, turret.col, playerIndex);
                         });
                     });
                 }, 2000); // Attack every 2 seconds
@@ -230,9 +237,12 @@
         }
 
         function attackStructure(row, col, playerIndex) {
+            const target = findTarget(playerIndex);
+            if (!target) return;
+
             const bullet = document.createElement('div');
             bullet.className = 'bullet';
-            const turretCell = document.querySelector(`.cell[data-row="${turrets[playerIndex][0].row}"][data-col="${turrets[playerIndex][0].col}"]`);
+            const turretCell = document.querySelector(`.cell[data-row="${target.row}"][data-col="${target.col}"]`);
             turretCell.appendChild(bullet);
 
             const targetCell = document.querySelector(`.cell[data-row="${row}"][data-col="${col}"]`);
@@ -247,17 +257,17 @@
             setTimeout(() => {
                 bullet.remove();
                 // Damage the target
-                if (boardState[row][col] === `Fort${opponentIndex + 1}`) {
-                    playerFortHealth[opponentIndex]--;
-                    if (playerFortHealth[opponentIndex] <= 0) {
+                if (boardState[target.row][target.col] === `Fort${(playerIndex === 0 ? 2 : 1)}`) {
+                    playerFortHealth[playerIndex === 0 ? 1 : 0]--;
+                    if (playerFortHealth[playerIndex === 0 ? 1 : 0] <= 0) {
                         messageDisplay.textContent = `Player ${playerIndex + 1} wins!`;
                         clearInterval(attackInterval);
                     }
-                } else if (boardState[row][col].startsWith('Turret')) {
-                    turretHealth[opponentIndex]--; // Reduce turret health
-                    if (turretHealth[opponentIndex] <= 0) {
-                        boardState[row][col] = null; // Destroy the turret
-                        playerPoints[opponentIndex] += 3; // Reward points
+                } else if (boardState[target.row][target.col].startsWith('Turret')) {
+                    turretHealth[playerIndex === 0 ? 1 : 0]--; // Reduce turret health
+                    if (turretHealth[playerIndex === 0 ? 1 : 0] <= 0) {
+                        boardState[target.row][target.col] = null; // Destroy the turret
+                        playerPoints[playerIndex === 0 ? 1 : 0] += 3; // Reward points
                         updateHealthBars();
                     }
                 }
