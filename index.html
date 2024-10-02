@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Defense Game v1.5</title>
+    <title>Defense Game v1.6</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -43,7 +43,7 @@
             position: relative;
         }
         .turret {
-            background-color: #f77f00; /* Player 1 Turrets */
+            background-color: #0077b6; /* Player 1 Turrets */
             position: relative;
         }
         .fort2, .turret2 {
@@ -219,22 +219,24 @@
 
         function fireTurret(row, col, playerIndex) {
             const turretCell = document.querySelector(`.cell[data-row="${row}"][data-col="${col}"]`);
-            const target = findTarget(playerIndex);
-            if (target) {
-                const bullet = document.createElement('div');
-                bullet.className = 'bullet';
-                turretCell.appendChild(bullet);
+            if (turretCell) {
+                const target = findTarget(playerIndex);
+                if (target) {
+                    const bullet = document.createElement('div');
+                    bullet.className = 'bullet';
+                    turretCell.appendChild(bullet);
 
-                const targetCell = document.querySelector(`.cell[data-row="${target.row}"][data-col="${target.col}"]`);
-                const dx = targetCell.offsetLeft - turretCell.offsetLeft;
-                const dy = targetCell.offsetTop - turretCell.offsetTop;
+                    const targetCell = document.querySelector(`.cell[data-row="${target.row}"][data-col="${target.col}"]`);
+                    const dx = targetCell.offsetLeft - turretCell.offsetLeft;
+                    const dy = targetCell.offsetTop - turretCell.offsetTop;
 
-                bullet.style.transform = `translate(${dx}px, ${dy}px)`;
+                    bullet.style.transform = `translate(${dx}px, ${dy}px)`;
 
-                setTimeout(() => {
-                    bullet.remove(); // Remove the bullet on impact
-                    damageStructure(target.row, target.col, playerIndex);
-                }, 2000); // Bullet takes 2 seconds to reach the target
+                    setTimeout(() => {
+                        bullet.remove(); // Remove the bullet on impact
+                        damageStructure(target.row, target.col, playerIndex);
+                    }, 2000); // Bullet takes 2 seconds to reach the target
+                }
             }
         }
 
