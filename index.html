@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Defense Game v1.3</title>
+    <title>Defense Game v1.4</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -282,6 +282,7 @@
             winnerMessage.textContent = `Player ${winner} wins!`;
             endScreen.style.display = 'block'; // Show end screen
             clearInterval(pointInterval); // Stop point gain
+            document.querySelectorAll('.cell').forEach(cell => cell.style.pointerEvents = 'none'); // Disable further actions
         }
 
         function endTurn() {
@@ -298,6 +299,7 @@
             document.querySelectorAll('.bullet').forEach(bullet => bullet.remove());
             endScreen.style.display = 'none'; // Hide end screen
             initializeBoard(); // Reinitialize the board
+            document.querySelectorAll('.cell').forEach(cell => cell.style.pointerEvents = 'auto'); // Enable actions
         }
 
         function startTurretFire() {
