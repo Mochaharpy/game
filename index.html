@@ -91,13 +91,13 @@
         <div class="controls">
             <div>
                 <p>Player 1 Points: <span id="player1Points">12</span></p>
-                <div class="health-bar">
+                <div class="health-bar" id="fort1HealthContainer">
                     <div class="health" id="fort1Health" style="width: 100%;"></div>
                 </div>
             </div>
             <div>
                 <p>Player 2 Points: <span id="player2Points">12</span></p>
-                <div class="health-bar">
+                <div class="health-bar" id="fort2HealthContainer">
                     <div class="health" id="fort2Health" style="width: 100%;"></div>
                 </div>
             </div>
@@ -172,7 +172,9 @@
                     cell.classList.add('fort');
                 } else if (cell.textContent.startsWith('Turret')) {
                     cell.classList.add('turret');
-                    cell.innerHTML += `<div class="turret-health">Health: ${turretHealth[currentPlayer - 1]}</div>`;
+                    const playerIndex = cell.textContent.endsWith('1') ? 0 : 1;
+                    const healthDisplay = '-'.repeat(turretHealth[playerIndex]);
+                    cell.innerHTML += `<div class="turret-health">Health: ${healthDisplay}</div>`;
                 }
             });
         }
@@ -212,9 +214,9 @@
         }
 
         function fireTurret(row, col, playerIndex) {
+            const turretCell = document.querySelector(`.cell[data-row="${row}"][data-col="${col}"]`);
             const bullet = document.createElement('div');
             bullet.className = 'bullet';
-            const turretCell = document.querySelector(`.cell[data-row="${row}"][data-col="${col}"]`);
             turretCell.appendChild(bullet);
 
             const target = findTarget(playerIndex);
