@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Defense Game v1.14</title>
+    <title>Defense Game v1.15</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -260,22 +260,31 @@
 
         function findTarget(playerIndex) {
             const targetPlayerIndex = playerIndex === 0 ? 1 : 0;
-            const targetFort = boardState[targetPlayerIndex === 0 ? fort2.row : fort1.row][targetPlayerIndex === 0 ? fort2.col : fort1.col];
-            return { row: targetPlayerIndex === 0 ? fort2.row : fort1.row, col: targetPlayerIndex === 0 ? fort2.col : fort1.col };
+            const targetFortRow = targetPlayerIndex === 0 ? fort2.row : fort1.row;
+            const targetFortCol = targetPlayerIndex === 0 ? fort2.col : fort1.col;
+
+            // Ensure the target is not their own structure
+            return { row: targetFortRow, col: targetFortCol };
         }
 
         function handleHit(row, col, playerIndex) {
             const structure = boardState[row][col];
             if (structure === 'Fort1' || structure === 'Fort2') {
+                // Avoid hitting own fort
+                if ((playerIndex === 0 && structure === 'Fort1') || (playerIndex === 1 && structure === 'Fort2')) {
+                    return; // Ignore self-hits
+                }
                 playerFortHealth[playerIndex]--;
                 if (playerFortHealth[playerIndex] <= 0) {
                     endGame(playerIndex);
                 }
             } else if (structure.startsWith('Turret')) {
                 const turretIndex = structure.endsWith('1') ? 0 : 1;
-                turretHealth[turretIndex]--;
-                if (turretHealth[turretIndex] <= 0) {
-                    removeTurret(row, col);
+                if (turretIndex !== playerIndex) { // Prevent self-hitting
+                    turretHealth[turretIndex]--;
+                    if (turretHealth[turretIndex] <= 0) {
+                        removeTurret(row, col);
+                    }
                 }
             }
             updateHealthBars();
