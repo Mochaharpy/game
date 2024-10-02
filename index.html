@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Defense Game v1.11</title>
+    <title>Defense Game v1.12</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -55,7 +55,6 @@
             border-radius: 50%;
             position: absolute;
             z-index: 10;
-            transition: transform 2s;
         }
         .health-bar {
             height: 10px;
@@ -151,8 +150,6 @@
                     board.appendChild(cell);
                 }
             }
-            boardState[fort1.row][fort1.col] = 'Fort1';
-            boardState[fort2.row][fort2.col] = 'Fort2';
             updateHealthBars();
         }
 
@@ -234,14 +231,27 @@
             turretHealth = [3, 3];
             playerPoints = [12, 12];
             currentPlayer = 1;
+            bullets = []; // Reset bullets
             endScreen.style.display = 'none';
             initializeBoard();
             messageDisplay.textContent = 'Player 1\'s turn!';
         }
 
+        function createBullet(row, col, direction) {
+            const bullet = { row, col, direction };
+            bullets.push(bullet);
+            const bulletElement = document.createElement('div');
+            bulletElement.className = 'bullet';
+            bulletElement.style.left = `${col * 75 + 30}px`; // Centering bullet
+            bulletElement.style.top = `${row * 75 + 30}px`; // Centering bullet
+            board.appendChild(bulletElement);
+            return bulletElement;
+        }
+
         function updateBullets() {
             bullets.forEach((bullet, index) => {
                 const { row, col, direction } = bullet;
+
                 if (direction === 'up') {
                     bullet.row -= 1;
                 } else if (direction === 'down') {
@@ -252,24 +262,46 @@
                     bullet.col += 1;
                 }
 
+                const bulletElement = document.querySelectorAll('.bullet')[index];
+                bulletElement.style.left = `${bullet.col * 75 + 30}px`;
+                bulletElement.style.top = `${bullet.row * 75 + 30}px`;
+
+                // Check for collisions
+                checkCollision(bullet, index);
+                
+                // Remove bullets that go out of bounds
                 if (bullet.row < 0 || bullet.row >= gridSize || bullet.col < 0 || bullet.col >= gridSize) {
-                    bullets.splice(index, 1); // Remove bullet if out of bounds
-                } else {
-                    checkCollision(bullet, index);
+                    bullets.splice(index, 1);
+                    bulletElement.remove();
                 }
             });
         }
 
         function checkCollision(bullet, index) {
             const cellContent = boardState[bullet.row][bullet.col];
-            if (cellContent && (cellContent.startsWith('Fort') || cellContent.startsWith('Turret'))) {
-                const playerIndex = cellContent.endsWith('1') ? 0 : 1;
-                if (playerFortHealth[playerIndex] > 0) {
+            if (cellContent) {
+                if (cellContent.startsWith('Fort')) {
+                    const playerIndex = cellContent.endsWith('1') ? 0 : 1;
                     playerFortHealth[playerIndex]--;
                     bullets.splice(index, 1); // Remove bullet on collision
+                    document.querySelectorAll('.bullet')[index].remove();
                     updateHealthBars();
                     if (playerFortHealth[playerIndex] <= 0) {
-                        endGame(currentPlayer === 1 ? 2 : 1); // Opponent wins
+                        endGame(playerIndex === 0 ? 2 : 1); // Opponent wins
+                    }
+                } else if (cellContent.startsWith('Turret')) {
+                    const playerIndex = cellContent.endsWith('1') ? 0 : 1;
+                    turretHealth[playerIndex]--;
+                    bullets.splice(index, 1); // Remove bullet on collision
+                    document.querySelectorAll('.bullet')[index].remove();
+                    updateHealthBars();
+                    if (turretHealth[playerIndex] <= 0) {
+                        const turretIndex = turrets[playerIndex].findIndex(t => t.row === bullet.row && t.col === bullet.col);
+                        if (turretIndex > -1) {
+                            turrets[playerIndex].splice(turretIndex, 1); // Remove turret
+                            boardState[bullet.row][bullet.col] = null; // Clear cell
+                            updateHealthBars();
+                        }
                     }
                 }
             }
@@ -282,17 +314,10 @@
         setInterval(() => {
             turrets.forEach((turretGroup, playerIndex) => {
                 turretGroup.forEach(turret => {
-                    const bullet = { row: turret.row, col: turret.col, direction: 'up' }; // Fire upward by default
-                    bullets.push(bullet);
-                    const bulletElement = document.createElement('div');
-                    bulletElement.className = 'bullet';
-                    bulletElement.style.left = `${turret.col * 75 + 30}px`; // Adjust for grid and bullet size
-                    bulletElement.style.top = `${turret.row * 75 + 30}px`; // Adjust for grid and bullet size
-                    board.appendChild(bulletElement);
+                    const bullet = createBullet(turret.row, turret.col, 'up'); // Fire upward by default
                 });
             });
         }, 2000);
-
     </script>
 </body>
 </html>
