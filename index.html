@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Defense Game v1.14</title>
+    <title>Defense Game v1.15</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -204,34 +204,31 @@
         }
 
         function fireTurret(row, col, playerIndex) {
-            const turretCell = document.querySelector(`.cell[data-row="${row}"][data-col="${col}"]`);
-            if (turretCell) {
-                const target = findTarget(playerIndex);
-                if (target) {
-                    createBullet(turretCell, target.row, target.col, playerIndex);
-                }
+            const target = findTarget(playerIndex);
+            if (target) {
+                createBullet(row, col, target.row, target.col);
             }
         }
 
-        function createBullet(turretCell, targetRow, targetCol, playerIndex) {
+        function createBullet(turretRow, turretCol, targetRow, targetCol) {
             const bullet = document.createElement('div');
             bullet.className = 'bullet';
-            bullet.style.left = `${turretCell.offsetLeft + 30}px`;
-            bullet.style.top = `${turretCell.offsetTop + 30}px`;
+            bullet.style.left = `${turretCol * 70 + 30}px`;
+            bullet.style.top = `${turretRow * 70 + 30}px`;
             board.appendChild(bullet);
 
             const targetX = targetCol * 70 + 35; // Center of target cell
             const targetY = targetRow * 70 + 35;
 
-            const dx = targetX - (turretCell.offsetLeft + 35);
-            const dy = targetY - (turretCell.offsetTop + 35);
+            const dx = targetX - (turretCol * 70 + 35);
+            const dy = targetY - (turretRow * 70 + 35);
             const distance = Math.sqrt(dx * dx + dy * dy);
             const steps = Math.floor(distance / 5);
             const stepX = dx / steps;
             const stepY = dy / steps;
 
-            let currentX = turretCell.offsetLeft + 30;
-            let currentY = turretCell.offsetTop + 30;
+            let currentX = turretCol * 70 + 30;
+            let currentY = turretRow * 70 + 30;
 
             const interval = setInterval(() => {
                 currentX += stepX;
@@ -239,34 +236,16 @@
                 bullet.style.left = `${currentX}px`;
                 bullet.style.top = `${currentY}px`;
 
-                const currentRow = Math.floor(currentY / 70);
-                const currentCol = Math.floor(currentX / 70);
-
-                if (currentRow >= 0 && currentRow < gridSize && currentCol >= 0 && currentCol < gridSize) {
-                    const structure = boardState[currentRow][currentCol];
-                    if (structure) {
-                        const turretIndex = boardState[row][col].endsWith('1') ? 0 : 1;
-                        if (turrets[turretIndex].some(t => t.row === row && t.col === col)) {
-                            clearInterval(interval);
-                            handleHit(currentRow, currentCol, playerIndex);
-                            bullet.remove();
-                        } else {
-                            clearInterval(interval);
-                            bullet.remove();
-                        }
-                    }
-                }
-
                 if (Math.abs(currentX - targetX) < 5 && Math.abs(currentY - targetY) < 5) {
                     clearInterval(interval);
                     bullet.remove();
+                    handleHit(targetRow, targetCol, currentPlayer - 1);
                 }
             }, 20);
         }
 
         function findTarget(playerIndex) {
             const targetPlayerIndex = playerIndex === 0 ? 1 : 0;
-            const targetFort = boardState[targetPlayerIndex === 0 ? fort2.row : fort1.row][targetPlayerIndex === 0 ? fort2.col : fort1.col];
             return { row: targetPlayerIndex === 0 ? fort2.row : fort1.row, col: targetPlayerIndex === 0 ? fort2.col : fort1.col };
         }
 
@@ -277,20 +256,7 @@
                 if (playerFortHealth[playerIndex] <= 0) {
                     endGame(playerIndex);
                 }
-            } else if (structure.startsWith('Turret')) {
-                const turretIndex = structure.endsWith('1') ? 0 : 1;
-                turretHealth[turretIndex]--;
-                if (turretHealth[turretIndex] <= 0) {
-                    removeTurret(row, col);
-                }
             }
-            updateHealthBars();
-        }
-
-        function removeTurret(row, col) {
-            const turretIndex = boardState[row][col].endsWith('1') ? 0 : 1;
-            turrets[turretIndex] = turrets[turretIndex].filter(t => !(t.row === row && t.col === col));
-            boardState[row][col] = null;
             updateHealthBars();
         }
 
