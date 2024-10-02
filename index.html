@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Defense Game v1.7</title>
+    <title>Defense Game v1.8</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -55,7 +55,7 @@
             background-color: #ff3e00; /* Bullets */
             border-radius: 50%;
             position: absolute;
-            transition: transform 2s; /* Slower bullet */
+            transition: transform 1s; /* Bullet speed */
         }
         .health-bar {
             height: 10px;
@@ -287,12 +287,13 @@
                     endGame(playerIndex + 1);
                 }
             } else if (boardState[row][col] && boardState[row][col].startsWith('Turret')) {
-                turretHealth[playerIndex === 0 ? 1 : 0]--; // Reduce turret health
-                if (turretHealth[playerIndex === 0 ? 1 : 0] <= 0) {
+                const opponentIndex = playerIndex === 0 ? 1 : 0;
+                turretHealth[opponentIndex]--; // Reduce turret health
+                if (turretHealth[opponentIndex] <= 0) {
                     const turretRow = row;
                     const turretCol = col;
                     boardState[turretRow][turretCol] = null; // Destroy the turret
-                    playerPoints[playerIndex === 0 ? 1 : 0] += 3; // Reward points
+                    playerPoints[opponentIndex] += 3; // Reward points
                     updateHealthBars();
                 }
             }
@@ -338,7 +339,7 @@
             playerPoints[0]++;
             playerPoints[1]++;
             playerPointsDisplay.textContent = playerPoints[0];
-            playerPointsDisplay.textContent = playerPoints[1];
+            player2PointsDisplay.textContent = playerPoints[1];
         }, 5000); // Gain points every 5 seconds
 
         updateHealthBars(); // Initial health bar update
