@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Defense Game v1.19</title>
+    <title>Defense Game v1.20</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -98,7 +98,7 @@
 </head>
 <body>
     <div class="game-container">
-        <h1>Defense Game v1.19</h1>
+        <h1>Defense Game v1.20</h1>
         <div class="points-container">
             <div>
                 <p>Player 1 Points: <span id="player1Points">12</span></p>
@@ -140,6 +140,8 @@
         let turrets = [[], []];
         let playerPoints = [12, 12];
         let boardState = Array.from({ length: gridSize }, () => Array(gridSize).fill(null));
+        let bullets = []; // To keep track of bullets
+        let turretIntervals = []; // To keep track of turret firing intervals
 
         // Fort positions
         const fort1 = { row: 4, col: 0 };
@@ -218,7 +220,8 @@
                 { r: row, c: col - 1 }, { r: row, c: col + 1 }
             ];
             return adjacentCells.some(cell => {
-                const { r, c } = cell;
+                const r = cell.r;
+                const c = cell.c;
                 return (r >= 0 && r < gridSize && c >= 0 && c < gridSize && 
                         (boardState[r][c] === 'Fort' + currentPlayer || 
                          boardState[r][c] === 'Turret' + currentPlayer));
@@ -232,6 +235,7 @@
                 bullet.className = 'bullet';
                 bullet.style.left = `${col * 70 + 35}px`;
                 bullet.style.top = `${row * 70 + 35}px`;
+                bullets.push(bullet); // Store bullet reference
                 board.appendChild(bullet);
 
                 const targetX = target.col * 70 + 35;
@@ -258,6 +262,7 @@
                             isColliding(bullet.getBoundingClientRect(), t)) {
                             clearInterval(interval);
                             bullet.remove();
+                            bullets = bullets.filter(b => b !== bullet); // Remove bullet reference
                             handleHit(target.row, target.col, 1 - playerIndex);
                             return;
                         }
@@ -267,6 +272,7 @@
                     if (Math.abs(currentX - targetX) < 5 && Math.abs(currentY - targetY) < 5) {
                         clearInterval(interval);
                         bullet.remove();
+                        bullets = bullets.filter(b => b !== bullet); // Remove bullet reference
                         handleHit(target.row, target.col, playerIndex);
                     }
                 }, 20);
@@ -330,11 +336,14 @@
         }
 
         function startTurretFire(row, col, playerIndex) {
-            setInterval(() => {
+            const intervalId = setInterval(() => {
                 if (boardState[row][col] === `Turret${playerIndex + 1}`) {
                     fireTurret(row, col, playerIndex);
+                } else {
+                    clearInterval(intervalId);
                 }
             }, 1000);
+            turretIntervals.push(intervalId);
         }
 
         function endTurn() {
@@ -347,6 +356,18 @@
             winnerMessage.textContent = `Player ${winningPlayerIndex + 1} Wins!`;
             endScreen.style.display = 'block';
             messageDisplay.textContent = '';
+            clearAllBullets();
+            stopAllTurrets();
+        }
+
+        function clearAllBullets() {
+            bullets.forEach(bullet => bullet.remove());
+            bullets = [];
+        }
+
+        function stopAllTurrets() {
+            turretIntervals.forEach(interval => clearInterval(interval));
+            turretIntervals = [];
         }
 
         function resetGame() {
@@ -355,6 +376,8 @@
             turrets = [[], []];
             playerPoints = [12, 12];
             boardState = Array.from({ length: gridSize }, () => Array(gridSize).fill(null));
+            clearAllBullets();
+            stopAllTurrets();
             initializeBoard();
             endScreen.style.display = 'none';
             currentPlayer = 1;
