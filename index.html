@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Defense Game v1.16</title>
+    <title>Defense Game v1.17</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -40,8 +40,9 @@
             position: relative;
         }
         .fort { background-color: #8ecae6; }
-        .turret { background-color: #0077b6; }
-        .fort2, .turret2 { background-color: #ff6f61; }
+        .fort2 { background-color: #ff6f61; }
+        .turret1 { background-color: #0077b6; }
+        .turret2 { background-color: #ff3e00; }
         .bullet {
             width: 10px;
             height: 10px;
@@ -90,13 +91,13 @@
         <h1>Defense Game</h1>
         <div class="points-container">
             <div>
-                <div class="points">Player 2 Points: <span id="player2Points">12</span></div>
+                <div class="points">Player 1 Points: <span id="player1Points">12</span></div>
                 <div class="health-bar" id="fort1HealthContainer">
                     <div class="health" id="fort1Health" style="width: 100%;"></div>
                 </div>
             </div>
             <div>
-                <div class="points">Player 1 Points: <span id="player1Points">12</span></div>
+                <div class="points">Player 2 Points: <span id="player2Points">12</span></div>
                 <div class="health-bar" id="fort2HealthContainer">
                     <div class="health" id="fort2Health" style="width: 100%;"></div>
                 </div>
@@ -161,7 +162,7 @@
                 const row = cell.dataset.row;
                 const col = cell.dataset.col;
                 cell.textContent = boardState[row][col] || '';
-                cell.classList.remove('fort', 'fort2', 'turret', 'turret2');
+                cell.classList.remove('fort', 'fort2', 'turret1', 'turret2');
                 if (boardState[row][col] === 'Fort1') {
                     cell.classList.add('fort');
                 } else if (boardState[row][col] === 'Fort2') {
@@ -173,6 +174,8 @@
                     cell.innerHTML += `<div class="turret-health">${healthDisplay}</div>`;
                 }
             });
+            document.getElementById('player1Points').textContent = playerPoints[0];
+            document.getElementById('player2Points').textContent = playerPoints[1];
         }
 
         function handleCellClick(row, col) {
@@ -208,21 +211,14 @@
             return adjacentCells.some(cell => {
                 const { r, c } = cell;
                 return r >= 0 && r < gridSize && c >= 0 && c < gridSize &&
-                    (boardState[r][c] && boardState[r][c].startsWith(`Turret${currentPlayer}`) || boardState[r][c] === `Fort${currentPlayer}`);
+                    (boardState[r][c] && (boardState[r][c].startsWith(`Turret${currentPlayer}`) || boardState[r][c] === `Fort${currentPlayer}`));
             });
         }
 
         function fireTurret(row, col, playerIndex) {
+            const target = findTarget(playerIndex);
             const turretCell = document.querySelector(`.cell[data-row="${row}"][data-col="${col}"]`);
-            if (turretCell) {
-                const target = findTarget(playerIndex);
-                if (target) {
-                    createBullet(turretCell, target, playerIndex);
-                }
-            }
-        }
 
-        function createBullet(turretCell, target, playerIndex) {
             const bullet = document.createElement('div');
             bullet.className = 'bullet';
             bullet.style.left = `${turretCell.offsetLeft + 30}px`;
