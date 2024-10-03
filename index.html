@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Defense Game v1.15</title>
+    <title>Defense Game v1.16</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -169,11 +169,14 @@
         }
 
         function canPlaceTurret(row, col) {
-            // Allow placing turrets only below the player's fort
+            // Allow placing turrets adjacent to the player's fort
+            const isAdjacentToFort1 = (row === fort1.row && Math.abs(col - fort1.col) === 1) || (col === fort1.col && Math.abs(row - fort1.row) === 1);
+            const isAdjacentToFort2 = (row === fort2.row && Math.abs(col - fort2.col) === 1) || (col === fort2.col && Math.abs(row - fort2.row) === 1);
+
             if (currentPlayer === 1) {
-                return row === fort1.row + 1 && col === fort1.col;
+                return isAdjacentToFort1;
             } else {
-                return row === fort2.row + 1 && col === fort2.col;
+                return isAdjacentToFort2;
             }
         }
 
@@ -193,7 +196,7 @@
                         messageDisplay.textContent = 'Not enough points to place a turret!';
                     }
                 } else {
-                    messageDisplay.textContent = 'Turrets can only be placed below your structures!';
+                    messageDisplay.textContent = 'Turrets can only be placed adjacent to your structures!';
                 }
             } else {
                 messageDisplay.textContent = 'Cell already occupied!';
@@ -220,14 +223,15 @@
         function createBullet(turretCell, targetRow, targetCol, playerIndex) {
             const bullet = document.createElement('div');
             bullet.className = 'bullet';
-            bullet.style.left = `${turretCell.offsetLeft + 25}px`; // Center bullet horizontally
-            bullet.style.top = `${turretCell.offsetTop + 25}px`; // Center bullet vertically
+            bullet.style.left = `${turretCell.offsetLeft + 35}px`; // Center bullet horizontally
+            bullet.style.top = `${turretCell.offsetTop + 30}px`; // Center bullet vertically
             board.appendChild(bullet);
 
-            const targetX = targetCol * 70 + 35; // Center of target cell
-            const targetY = targetRow * 70 + 35; // Center of target cell
-            const dx = targetX - (turretCell.offsetLeft + 25);
-            const dy = targetY - (turretCell.offsetTop + 25);
+            const targetX = targetCol * 75 + 37.5; // Adjust target X position
+            const targetY = targetRow * 75 + 35; // Adjust target Y position
+
+            const dx = targetX - (turretCell.offsetLeft + 35); // Adjust for bullet's center
+            const dy = targetY - (turretCell.offsetTop + 30); // Adjust for bullet's center
             const distance = Math.sqrt(dx * dx + dy * dy);
             const speed = 2; // Adjust speed as needed
 
