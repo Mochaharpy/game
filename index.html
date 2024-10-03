@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Defense Game v1.25</title>
+    <title>Defense Game v1.26</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -100,7 +100,7 @@
 </head>
 <body>
     <div class="game-container">
-        <h1>Defense Game v1.25</h1>
+        <h1>Defense Game v1.26</h1>
         <div class="points-container">
             <div>
                 <p>Player 1 Points: <span id="player1Points">12</span></p>
@@ -144,12 +144,37 @@
         let boardState = Array.from({ length: gridSize }, () => Array(gridSize).fill(null));
         let bullets = []; // To keep track of bullets
         let turretIntervals = []; // To keep track of turret firing intervals
+        let gamePaused = false; // Track whether the game is paused
 
         // Fort positions
         const fort1 = { row: 4, col: 0 };
         const fort2 = { row: 4, col: gridSize - 1 };
 
         initializeBoard();
+        setupVisibilityChange();
+
+        function setupVisibilityChange() {
+            document.addEventListener('visibilitychange', () => {
+                if (document.hidden) {
+                    pauseGame();
+                } else {
+                    resumeGame();
+                }
+            });
+        }
+
+        function pauseGame() {
+            gamePaused = true;
+            stopAllTurrets();
+            clearAllBullets();
+            messageDisplay.textContent = 'Game Paused. Please return to resume.';
+        }
+
+        function resumeGame() {
+            gamePaused = false;
+            messageDisplay.textContent = `Player ${currentPlayer}'s turn`;
+            startTurretFiring(); // Resume turret firing if needed
+        }
 
         function initializeBoard() {
             board.innerHTML = '';
@@ -194,6 +219,7 @@
         }
 
         function handleCellClick(row, col) {
+            if (gamePaused) return; // Prevent actions while paused
             if (boardState[row][col] === null) {
                 if (canPlaceTurret(row, col)) {
                     if (playerPoints[currentPlayer - 1] >= 3) {
@@ -202,32 +228,19 @@
                         playerPoints[currentPlayer - 1] -= 3;
                         playerPoints[currentPlayer - 1]++;
                         updateHealthBars();
-                        fireTurret(row, col, currentPlayer - 1); // Fire immediately
-                        startTurretFire(row, col, currentPlayer - 1); // Start turret firing at intervals
-                        endTurn();
+                        fireTurret(row, col, currentPlayer - 1);
+                        startTurretFire(row, col, currentPlayer - 1);
                     } else {
-                        messageDisplay.textContent = 'Not enough points to place a turret!';
+                        messageDisplay.textContent = 'Not enough points to place turret!';
                     }
                 } else {
-                    messageDisplay.textContent = 'Turrets can only be placed adjacent to your structures!';
+                    messageDisplay.textContent = 'Turrets can only be placed below structures.';
                 }
-            } else {
-                messageDisplay.textContent = 'Cell already occupied!';
             }
         }
 
         function canPlaceTurret(row, col) {
-            const adjacentCells = [
-                { r: row - 1, c: col }, { r: row + 1, c: col },
-                { r: row, c: col - 1 }, { r: row, c: col + 1 }
-            ];
-            return adjacentCells.some(cell => {
-                const r = cell.r;
-                const c = cell.c;
-                return r >= 0 && r < gridSize && c >= 0 && c < gridSize &&
-                    (boardState[r][c] === 'Fort' + currentPlayer ||
-                     boardState[r][c] === 'Turret' + currentPlayer);
-            });
+            return row === fort1.row + 1 && col === fort1.col || row === fort2.row + 1 && col === fort2.col;
         }
 
         function fireTurret(row, col, playerIndex) {
@@ -253,6 +266,11 @@
                 let currentY = row * 70 + 50;
 
                 const interval = setInterval(() => {
+                    if (gamePaused) {
+                        clearInterval(interval);
+                        return; // Stop movement if the game is paused
+                    }
+
                     currentX += stepX;
                     currentY += stepY;
                     bullet.style.left = `${currentX}px`;
@@ -340,6 +358,11 @@
 
         function startTurretFire(row, col, playerIndex) {
             const intervalId = setInterval(() => {
+                if (gamePaused) {
+                    clearInterval(intervalId);
+                    return; // Stop firing if the game is paused
+                }
+
                 if (boardState[row][col] === `Turret${playerIndex + 1}`) {
                     fireTurret(row, col, playerIndex);
                 } else {
