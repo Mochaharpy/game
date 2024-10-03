@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Defense Game v1.15</title>
+    <title>Defense Game v1.16</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -58,7 +58,7 @@
             position: relative;
         }
         .health { height: 100%; background-color: green; }
-        .missing-health { height: 100%; background-color: red; position: absolute; top: 0; left: 0; }
+        .missing-health { height: 100%; background-color: red; position: absolute; top: 0; right: 0; }
         .turret-health {
             font-size: 12px;
             color: darkred;
@@ -128,6 +128,7 @@
         let turrets = [[], []];
         let playerPoints = [12, 12];
         let boardState = Array.from({ length: gridSize }, () => Array(gridSize).fill(null));
+        let gamePaused = false;
 
         // Fort positions
         const fort1 = { row: 4, col: 0 };
@@ -208,7 +209,7 @@
             return adjacentCells.some(cell => {
                 const { r, c } = cell;
                 return r >= 0 && r < gridSize && c >= 0 && c < gridSize &&
-                    (boardState[r][c] && boardState[r][c].startsWith(`Turret${currentPlayer}`) || boardState[r][c] === `Fort${currentPlayer}`);
+                    (boardState[r][c] === 'Fort1' || boardState[r][c] === 'Fort2');
             });
         }
 
@@ -290,6 +291,17 @@
             currentPlayer = 1;
             initializeBoard();
         }
+
+        // Pause game when tab is not active
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) {
+                gamePaused = true;
+                clearInterval(); // Add logic to stop all intervals
+            } else {
+                gamePaused = false;
+                // Restart game logic if needed
+            }
+        });
     </script>
 </body>
 </html>
