@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Defense Game v1.16</title>
+    <title>Defense Game v1.17</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -129,6 +129,7 @@
         let playerPoints = [12, 12];
         let boardState = Array.from({ length: gridSize }, () => Array(gridSize).fill(null));
         let gamePaused = false;
+        let fireIntervals = []; // Track firing intervals
 
         // Fort positions
         const fort1 = { row: 4, col: 0 };
@@ -185,7 +186,6 @@
                         boardState[row][col] = `Turret${currentPlayer}`;
                         turrets[currentPlayer - 1].push({ row, col });
                         playerPoints[currentPlayer - 1] -= 3;
-                        playerPoints[currentPlayer - 1]++;
                         updateHealthBars();
                         fireTurret(row, col, currentPlayer - 1); // Fire immediately
                         startTurretFire(row, col, currentPlayer - 1); // Start turret firing at intervals
@@ -206,10 +206,9 @@
                 { r: row - 1, c: col }, { r: row + 1, c: col },
                 { r: row, c: col - 1 }, { r: row, c: col + 1 }
             ];
-            return adjacentCells.some(cell => {
-                const { r, c } = cell;
+            return adjacentCells.some(({ r, c }) => {
                 return r >= 0 && r < gridSize && c >= 0 && c < gridSize &&
-                    (boardState[r][c] === 'Fort1' || boardState[r][c] === 'Fort2');
+                       (boardState[r][c] === 'Fort1' || boardState[r][c] === 'Fort2');
             });
         }
 
@@ -218,8 +217,8 @@
             if (target) {
                 const bullet = document.createElement('div');
                 bullet.className = 'bullet';
-                bullet.style.left = `${col * 75 + 32}px`; // Centered in the cell
-                bullet.style.top = `${row * 75 + 32}px`; // Centered in the cell
+                bullet.style.left = `${col * 75 + 35}px`; // Centered in the cell
+                bullet.style.top = `${row * 75 + 35}px`; // Centered in the cell
                 board.appendChild(bullet);
                 
                 const angle = Math.atan2(target.row - row, target.col - col);
@@ -264,6 +263,7 @@
             const fireInterval = setInterval(() => {
                 fireTurret(row, col, playerIndex);
             }, 1000);
+            fireIntervals.push(fireInterval); // Keep track of intervals
         }
 
         function endTurn() {
@@ -278,10 +278,17 @@
             cells.forEach(cell => {
                 cell.replaceWith(cell.cloneNode(true)); // Disable clicks
             });
+            clearAllIntervals(); // Clear all intervals when the game ends
+        }
+
+        function clearAllIntervals() {
+            fireIntervals.forEach(interval => clearInterval(interval));
+            fireIntervals = [];
         }
 
         function resetGame() {
             playerFortHealth = [10, 10];
+            turretHealth = [3, 3];
             turrets = [[], []];
             playerPoints = [12, 12];
             boardState = Array.from({ length: gridSize }, () => Array(gridSize).fill(null));
@@ -289,6 +296,7 @@
             boardState[fort2.row][fort2.col] = 'Fort2';
             endScreen.style.display = 'none';
             currentPlayer = 1;
+            clearAllIntervals(); // Clear firing intervals
             initializeBoard();
         }
 
@@ -296,7 +304,7 @@
         document.addEventListener('visibilitychange', () => {
             if (document.hidden) {
                 gamePaused = true;
-                clearInterval(); // Add logic to stop all intervals
+                clearAllIntervals(); // Clear all firing intervals
             } else {
                 gamePaused = false;
                 // Restart game logic if needed
