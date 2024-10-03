@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Defense Game v1.21</title>
+    <title>Defense Game v1.22</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -207,8 +207,13 @@
             ];
             return adjacentCells.some(({ r, c }) => {
                 return r >= 0 && r < gridSize && c >= 0 && c < gridSize &&
-                       (boardState[r][c] === 'Fort1' || boardState[r][c] === 'Fort2' || 
+                       (boardState[r][c] === 'Fort1' || 
+                        boardState[r][c] === 'Fort2' || 
                         boardState[r][c] && boardState[r][c].startsWith('Turret'));
+            }) && adjacentCells.some(({ r, c }) => {
+                return r >= 0 && r < gridSize && c >= 0 && c < gridSize &&
+                       (boardState[r][c] === 'Fort' + currentPlayer || 
+                        (turrets[currentPlayer - 1].some(turret => turret.row === r && turret.col === c)));
             });
         }
 
