@@ -251,13 +251,18 @@
             const enemyStructures = [];
             const enemyIndex = playerIndex === 0 ? 1 : 0;
 
-            for (let i = 0; i < gridSize; i++) {
-                for (let j = 0; j < gridSize; j++) {
-                    if (boardState[i][j] && (boardState[i][j].startsWith('Fort') || boardState[i][j].includes('Turret'))) {
-                        enemyStructures.push({ row: i, col: j });
-                    }
-                }
+            // Add enemy fort
+            if (boardState[fort2.row][fort2.col] && enemyIndex === 1) {
+                enemyStructures.push({ row: fort2.row, col: fort2.col });
             }
+            if (boardState[fort1.row][fort1.col] && enemyIndex === 0) {
+                enemyStructures.push({ row: fort1.row, col: fort1.col });
+            }
+
+            // Add enemy turrets
+            turrets[enemyIndex].forEach(turret => {
+                enemyStructures.push({ row: turret.row, col: turret.col });
+            });
 
             let closest = null;
             let minDistance = Infinity;
