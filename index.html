@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Defense Game v1.19</title>
+    <title>Defense Game v1.20</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -40,8 +40,8 @@
             position: relative;
         }
         .fort { background-color: #8ecae6; }
-        .turret { background-color: #0077b6; } /* Player 1 Turrets */
-        .fort2, .turret2 { background-color: #ff6f61; } /* Player 2 Structures */
+        .turret { background-color: #0077b6; }
+        .fort2, .turret2 { background-color: #ff6f61; }
         .bullet {
             width: 10px;
             height: 10px;
@@ -129,9 +129,8 @@
         let playerPoints = [12, 12];
         let boardState = Array.from({ length: gridSize }, () => Array(gridSize).fill(null));
         let gamePaused = false;
-        let fireIntervals = []; // Track firing intervals
+        let fireIntervals = [];
 
-        // Fort positions
         const fort1 = { row: 4, col: 0 };
         const fort2 = { row: 4, col: gridSize - 1 };
         boardState[fort1.row][fort1.col] = 'Fort1';
@@ -187,8 +186,8 @@
                         turrets[currentPlayer - 1].push({ row, col });
                         playerPoints[currentPlayer - 1] -= 3;
                         updateHealthBars();
-                        fireTurret(row, col, currentPlayer - 1); // Fire immediately
-                        startTurretFire(row, col, currentPlayer - 1); // Start turret firing at intervals
+                        fireTurret(row, col, currentPlayer - 1);
+                        startTurretFire(row, col, currentPlayer - 1);
                         endTurn();
                     } else {
                         messageDisplay.textContent = 'Not enough points to place a turret!';
@@ -216,8 +215,8 @@
         function fireTurret(row, col, playerIndex) {
             const bullet = document.createElement('div');
             bullet.className = 'bullet';
-            bullet.style.left = `${col * 75 + 32}px`; // Center the bullet in the cell
-            bullet.style.top = `${row * 75 + 32}px`; // Center the bullet in the cell
+            bullet.style.left = `${col * 75 + 32}px`;
+            bullet.style.top = `${row * 75 + 32}px`;
             board.appendChild(bullet);
             moveBullet(bullet, playerIndex);
         }
@@ -233,8 +232,8 @@
                 const bulletPosition = bullet.getBoundingClientRect();
                 const targetPosition = document.querySelector(`.cell[data-row='${targetRow}'][data-col='${targetCol}']`).getBoundingClientRect();
 
-                const deltaX = targetPosition.left - bulletPosition.left + 32; // Center
-                const deltaY = targetPosition.top - bulletPosition.top + 32; // Center
+                const deltaX = targetPosition.left - bulletPosition.left + 32;
+                const deltaY = targetPosition.top - bulletPosition.top + 32;
 
                 const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
                 if (distance < 15) {
@@ -252,7 +251,6 @@
             const enemyStructures = [];
             const enemyIndex = playerIndex === 0 ? 1 : 0;
 
-            // Collect enemy structures
             for (let i = 0; i < gridSize; i++) {
                 for (let j = 0; j < gridSize; j++) {
                     if (boardState[i][j] && (boardState[i][j].startsWith('Fort') || boardState[i][j].includes('Turret'))) {
@@ -261,11 +259,10 @@
                 }
             }
 
-            // Find the nearest enemy structure
             let closest = null;
             let minDistance = Infinity;
             enemyStructures.forEach(structure => {
-                const distance = Math.sqrt((structure.row - bulletY) ** 2 + (structure.col - bulletX) ** 2);
+                const distance = Math.sqrt((structure.row - bulletY / 75) ** 2 + (structure.col - bulletX / 75) ** 2);
                 if (distance < minDistance) {
                     minDistance = distance;
                     closest = structure;
@@ -304,7 +301,7 @@
         }
 
         function endGame(winnerIndex) {
-            clearInterval(fireIntervals); // Stop all firing
+            clearInterval(fireIntervals);
             endScreen.style.display = 'block';
             winnerMessage.textContent = `Player ${winnerIndex + 1} wins!`;
         }
@@ -322,7 +319,6 @@
             messageDisplay.textContent = '';
         }
 
-        // Pause the game when the tab is inactive
         document.addEventListener('visibilitychange', () => {
             if (document.hidden) {
                 gamePaused = true;
@@ -330,7 +326,6 @@
                 gamePaused = false;
             }
         });
-
     </script>
 </body>
 </html>
