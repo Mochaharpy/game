@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Defense Game v1.23</title>
+    <title>Defense Game v1.24</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -75,6 +75,7 @@
             font-size: 12px;
             color: darkred;
             text-align: center;
+            margin-top: 5px; /* Adjusted to position health below the turret */
         }
         .end-screen {
             display: none;
@@ -99,7 +100,7 @@
 </head>
 <body>
     <div class="game-container">
-        <h1>Defense Game v1.23</h1>
+        <h1>Defense Game v1.24</h1>
         <div class="points-container">
             <div>
                 <p>Player 1 Points: <span id="player1Points">12</span></p>
@@ -187,7 +188,7 @@
                     const playerIndex = cell.textContent.endsWith('1') ? 0 : 1;
                     cell.classList.add('turret' + (playerIndex + 1));
                     const healthDisplay = '-'.repeat(turretHealth[playerIndex]);
-                    cell.innerHTML += `<div class="turret-health">${healthDisplay}</div>`;
+                    cell.innerHTML += `<div class="turret-health">${healthDisplay}</div>`; // Health is below turret name
                 }
             });
         }
@@ -223,9 +224,9 @@
             return adjacentCells.some(cell => {
                 const r = cell.r;
                 const c = cell.c;
-                return (r >= 0 && r < gridSize && c >= 0 && c < gridSize &&
-                    (boardState[r][c] === 'Fort' + currentPlayer || 
-                     boardState[r][c] === 'Turret' + currentPlayer));
+                return r >= 0 && r < gridSize && c >= 0 && c < gridSize &&
+                    (boardState[r][c] === 'Fort' + currentPlayer ||
+                     boardState[r][c] === 'Turret' + currentPlayer);
             });
         }
 
@@ -235,21 +236,21 @@
                 const bullet = document.createElement('div');
                 bullet.className = 'bullet';
                 bullet.style.left = `${col * 70 + 35}px`; // Center of turret
-                bullet.style.top = `${row * 70 + 35}px`; // Center of turret
+                bullet.style.top = `${row * 70 + 45}px`; // Adjust to spawn a bit lower
                 bullets.push(bullet); // Store bullet reference
                 board.appendChild(bullet);
 
                 const targetX = target.col * 70 + 35; // Center of target
-                const targetY = target.row * 70 + 35; // Center of target
+                const targetY = target.row * 70 + 45; // Center of target
                 const dx = targetX - (col * 70 + 35);
-                const dy = targetY - (row * 70 + 35);
+                const dy = targetY - (row * 70 + 45);
                 const distance = Math.sqrt(dx * dx + dy * dy);
                 const steps = Math.floor(distance / 5);
                 const stepX = dx / steps;
                 const stepY = dy / steps;
 
                 let currentX = col * 70 + 35;
-                let currentY = row * 70 + 35;
+                let currentY = row * 70 + 45;
 
                 const interval = setInterval(() => {
                     currentX += stepX;
